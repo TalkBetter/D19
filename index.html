@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QQ Reading Worksheet</title>
+  <style>
+    :root {
+      --bg: #fffdf7;
+      --paper: #ffffff;
+      --ink: #25322d;
+      --muted: #66756d;
+      --line: #dfe7df;
+      --main: #2f6f5f;
+      --soft: #edf7f2;
+      --soft-2: #f7fbf8;
+      --accent: #ffbf3c;
+      --accent-2: #e56b2e;
+      --page-width: 1220px;
+      --shadow: 0 10px 28px rgba(37, 50, 45, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Microsoft JhengHei", "PingFang TC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    main {
+      padding: 18px 12px 36px;
+    }
+
+    .page {
+      width: min(var(--page-width), 100%);
+      margin: 0 auto 18px;
+      background: var(--paper);
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .page-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #dff3ea 0%, #c7eadc 100%);
+    }
+
+    .part-title {
+      margin: 0;
+      color: var(--main);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 900;
+      line-height: 1.1;
+    }
+
+    .rule-hot {
+      color: #c92a2a;
+      font-weight: 900;
+    }
+
+    .story-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 210px;
+      gap: 22px;
+      align-items: start;
+      margin-bottom: 18px;
+      padding: 18px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, var(--soft-2) 0%, var(--soft) 100%);
+    }
+
+    .story-title {
+      margin: 4px 0 14px;
+      color: var(--main);
+      font-size: clamp(1.8rem, 3.5vw, 2.65rem);
+      font-weight: 900;
+    }
+
+    .story-text {
+      margin: 0;
+      font-size: clamp(1.22rem, 2vw, 1.72rem);
+      line-height: 1.65;
+    }
+
+    .translation {
+      display: none;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: clamp(1.02rem, 1.7vw, 1.34rem);
+      line-height: 1.65;
+      font-weight: 700;
+    }
+
+    .book-image,
+    .poster-image {
+      width: 100%;
+      display: block;
+      object-fit: contain;
+      border-radius: 18px;
+      background: #ffffff;
+      padding: 8px;
+      border: 1px solid rgba(47, 111, 95, 0.14);
+    }
+
+    .qa-block,
+    .part-c-grid,
+    .part-d-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .part-c-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .part-d-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.9fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .part-d-grid {
+      align-content: start;
+    }
+
+    .section-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      margin: 0 0 12px;
+    }
+
+    .question,
+    .fact-card {
+      padding: 16px 18px 18px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--paper);
+    }
+
+    .question-row {
+      margin-bottom: 10px;
+    }
+
+    .question-text,
+    .prompt-text,
+    .fact-text {
+      margin: 0;
+      font-size: clamp(1.3rem, 2.35vw, 1.9rem);
+      line-height: 1.45;
+      font-weight: 900;
+    }
+
+    .fact-text {
+      color: var(--main);
+    }
+
+    .answer-text {
+      display: none;
+    }
+
+    .answer-lines {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .line {
+      border-bottom: 3px solid #97afa7;
+      min-height: 34px;
+      padding: 4px 2px 2px;
+      font-size: clamp(1.02rem, 1.7vw, 1.28rem);
+      line-height: 1.5;
+      font-weight: 800;
+      color: var(--main);
+    }
+
+    .mini-button {
+      min-height: 46px;
+      padding: 10px 18px;
+      border: 0;
+      border-radius: 14px;
+      background: var(--accent);
+      color: #1f2d27;
+      font-size: 1.02rem;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(255, 191, 60, 0.34);
+    }
+
+    .mini-button.is-active {
+      background: var(--accent-2);
+      color: #ffffff;
+      box-shadow: 0 8px 18px rgba(229, 107, 46, 0.28);
+    }
+
+    .page.show-help .translation,
+    .qa-block.show-help .answer-text,
+    .question.show-answer .answer-text {
+      display: block;
+    }
+
+    .part-d-page.hide-sentences .fact-text {
+      display: none;
+    }
+
+    @media (max-width: 900px) {
+      .page {
+        padding: 14px;
+      }
+
+      .page-header {
+        align-items: start;
+      }
+
+      .story-head,
+      .part-d-layout {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        padding: 14px;
+      }
+
+      .book-image,
+      .poster-image {
+        max-width: 420px;
+        margin: 0 auto;
+      }
+
+      .part-c-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+      }
+
+      main {
+        padding: 0;
+      }
+
+      .page {
+        width: 100%;
+        margin: 0;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        page-break-after: always;
+      }
+
+      .page:last-child {
+        page-break-after: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="page">
+      <header class="page-header">
+        <h1 class="part-title">Part B: Reading and Writing (17 18 週報推薦書籍)</h1>
+      </header>
+
+      <div class="story-head">
+        <div>
+          <h2 class="story-title">Welcome Back, Butterflies!</h2>
+          <p class="story-text">
+            I love butterflies. I love the orange and black ones. In the fall, they fly south.
+            They fly away from me. In the spring, they fly north. They fly back to me. They fly
+            back to lay their eggs. They need the right plants for their eggs. I plant seeds in
+            my yard. I water the seeds. I watch the seeds sprout. I watch the plants grow. My
+            yard has the right plants now. Welcome back, butterflies!
+          </p>
+          <p class="translation">
+            我喜歡蝴蝶。我喜歡橘色和黑色的那些。到了秋天，牠們會往南飛，飛離我。到了春天，牠們會往北飛，再飛回來。牠們飛回來是為了產卵。牠們需要適合產卵的植物。我在院子裡種下種子，也幫種子澆水。我看著種子發芽，看著植物長大。現在我的院子裡已經有適合的植物了。歡迎回來，蝴蝶們！
+          </p>
+        </div>
+        <img class="book-image" src="Book1.png" alt="Butterflies reading passage illustration">
+      </div>
+
+      <div class="qa-block">
+        <div class="section-toolbar">
+          <button class="mini-button part-b-toggle" type="button">顯示中文＋答案</button>
+        </div>
+
+        <section class="question">
+          <div class="question-row">
+            <p class="question-text">1. What do the butterflies look like?</p>
+            <p class="translation">蝴蝶看起來是什麼樣子？</p>
+          </div>
+          <div class="answer-lines">
+            <div class="line"><span class="answer-text">They are orange and black.</span></div>
+            <div class="line"></div>
+          </div>
+        </section>
+
+        <section class="question">
+          <div class="question-row">
+            <p class="question-text">2. When do the butterflies fly away?</p>
+            <p class="translation">蝴蝶什麼時候飛走？</p>
+          </div>
+          <div class="answer-lines">
+            <div class="line"><span class="answer-text">They fly away in the fall.</span></div>
+            <div class="line"></div>
+          </div>
+        </section>
+
+        <section class="question">
+          <div class="question-row">
+            <p class="question-text">3. Why do you think the butterflies fly back?</p>
+            <p class="translation">你覺得蝴蝶為什麼會飛回來？</p>
+          </div>
+          <div class="answer-lines">
+            <div class="line"><span class="answer-text">I think they fly back because they need the right plants to lay their eggs.</span></div>
+            <div class="line"></div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="page">
+      <div class="story-head">
+        <div>
+          <h2 class="story-title">Earthworms Help Plants Grow</h2>
+          <p class="story-text">
+            Earthworms are small animals. They build long tunnels underground. The tunnels help
+            water and air reach plant roots. Earthworms make space in the soil. Earthworm waste
+            helps plants grow big and strong. Earthworms are small, but they have a big job.
+          </p>
+          <p class="translation">
+            蚯蚓是小動物。牠們會在地下挖長長的通道。這些通道能幫助水和空氣到達植物的根部。蚯蚓會在土壤中製造空間。蚯蚓的排泄物也能幫助植物長得又高又壯。蚯蚓雖然小，卻有很重要的工作。
+          </p>
+        </div>
+        <img class="book-image" src="Book2.png" alt="Earthworms reading passage illustration">
+      </div>
+
+      <div class="qa-block">
+        <div class="section-toolbar">
+          <button class="mini-button part-b-toggle" type="button">顯示中文＋答案</button>
+        </div>
+
+        <section class="question">
+          <div class="question-row">
+            <p class="question-text">1. What do earthworms build underground?</p>
+            <p class="translation">蚯蚓在地下建造什麼？</p>
+          </div>
+          <div class="answer-lines">
+            <div class="line"><span class="answer-text">They build long tunnels underground.</span></div>
+            <div class="line"></div>
+          </div>
+        </section>
+
+        <section class="question">
+          <div class="question-row">
+            <p class="question-text">2. What do earthworm tunnels help reach plant roots?</p>
+            <p class="translation">蚯蚓的通道幫助什麼到達植物根部？</p>
+          </div>
+          <div class="answer-lines">
+            <div class="line"><span class="answer-text">They help water and air reach plant roots.</span></div>
+            <div class="line"></div>
+          </div>
+        </section>
+
+        <section class="question">
+          <div class="question-row">
+            <p class="question-text">3. Do you think earthworms are good for plants? Why?</p>
+            <p class="translation">你覺得蚯蚓對植物有幫助嗎？為什麼？</p>
+          </div>
+          <div class="answer-lines">
+            <div class="line"><span class="answer-text">Yes, I think earthworms are good for plants because they help plants grow.</span></div>
+            <div class="line"></div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="page">
+      <div class="story-head">
+        <div>
+          <h2 class="story-title">Earthworm Bodies</h2>
+          <p class="story-text">
+            The body of an earthworm is made up of many parts. Each part is shaped like a ring.
+            Each part can bend and stretch. Earthworms move by stretching and pulling their
+            bodies.
+          </p>
+          <p class="translation">
+            蚯蚓的身體是由很多部分組成的。每一部分都像一個圓環。每一部分都可以彎曲和伸展。蚯蚓靠著伸長和拉動身體來移動。
+          </p>
+        </div>
+        <img class="book-image" src="Book2.png" alt="Earthworm body reading passage illustration">
+      </div>
+
+      <div class="qa-block">
+        <div class="section-toolbar">
+          <button class="mini-button part-b-toggle" type="button">顯示中文＋答案</button>
+        </div>
+
+        <section class="question">
+          <div class="question-row">
+            <p class="question-text">1. What is the body of an earthworm made up of?</p>
+            <p class="translation">蚯蚓的身體是由什麼組成的？</p>
+          </div>
+          <div class="answer-lines">
+            <div class="line"><span class="answer-text">The body of an earthworm is made up of many parts.</span></div>
+            <div class="line"></div>
+          </div>
+        </section>
+
+        <section class="question">
+          <div class="question-row">
+            <p class="question-text">2. What is each part shaped like?</p>
+            <p class="translation">每一部分的形狀像什麼？</p>
+          </div>
+          <div class="answer-lines">
+            <div class="line"><span class="answer-text">Each part is shaped like a ring.</span></div>
+            <div class="line"></div>
+          </div>
+        </section>
+
+        <section class="question">
+          <div class="question-row">
+            <p class="question-text">3. How do earthworms move?</p>
+            <p class="translation">蚯蚓怎麼移動？</p>
+          </div>
+          <div class="answer-lines">
+            <div class="line"><span class="answer-text">Earthworms move by stretching and pulling their bodies.</span></div>
+            <div class="line"></div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="page">
+      <header class="page-header">
+        <h1 class="part-title">Part C: Chinese to English</h1>
+      </header>
+
+      <div class="part-c-grid">
+        <section class="question">
+          <div class="question-row"><p class="prompt-text">1. 我不吃糖果。</p></div>
+          <div class="section-toolbar"><button class="mini-button part-c-toggle" type="button">顯示答案</button></div>
+          <div class="answer-lines"><div class="line"><span class="answer-text">I do not eat candy.</span></div></div>
+        </section>
+        <section class="question">
+          <div class="question-row"><p class="prompt-text">2. 他想要蘋果。</p></div>
+          <div class="section-toolbar"><button class="mini-button part-c-toggle" type="button">顯示答案</button></div>
+          <div class="answer-lines"><div class="line"><span class="answer-text">He wants apples.</span></div></div>
+        </section>
+        <section class="question">
+          <div class="question-row"><p class="prompt-text">3. 她不想要牛奶。</p></div>
+          <div class="section-toolbar"><button class="mini-button part-c-toggle" type="button">顯示答案</button></div>
+          <div class="answer-lines"><div class="line"><span class="answer-text">She does not want milk.</span></div></div>
+        </section>
+        <section class="question">
+          <div class="question-row"><p class="prompt-text">4. 我不游泳。</p></div>
+          <div class="section-toolbar"><button class="mini-button part-c-toggle" type="button">顯示答案</button></div>
+          <div class="answer-lines"><div class="line"><span class="answer-text">I do not swim.</span></div></div>
+        </section>
+        <section class="question">
+          <div class="question-row"><p class="prompt-text">5. 我不喜歡牛奶。</p></div>
+          <div class="section-toolbar"><button class="mini-button part-c-toggle" type="button">顯示答案</button></div>
+          <div class="answer-lines"><div class="line"><span class="answer-text">I do not like milk.</span></div></div>
+        </section>
+        <section class="question">
+          <div class="question-row"><p class="prompt-text">6. 我不踢足球。</p></div>
+          <div class="section-toolbar"><button class="mini-button part-c-toggle" type="button">顯示答案</button></div>
+          <div class="answer-lines"><div class="line"><span class="answer-text">I do not play soccer.</span></div></div>
+        </section>
+        <section class="question">
+          <div class="question-row"><p class="prompt-text">7. 他喜歡糖果。</p></div>
+          <div class="section-toolbar"><button class="mini-button part-c-toggle" type="button">顯示答案</button></div>
+          <div class="answer-lines"><div class="line"><span class="answer-text">He likes candy.</span></div></div>
+        </section>
+        <section class="question">
+          <div class="question-row"><p class="prompt-text">8. 他吃蘋果。</p></div>
+          <div class="section-toolbar"><button class="mini-button part-c-toggle" type="button">顯示答案</button></div>
+          <div class="answer-lines"><div class="line"><span class="answer-text">He eats apples.</span></div></div>
+        </section>
+        <section class="question">
+          <div class="question-row"><p class="prompt-text">9. 她不吃蛋糕。</p></div>
+          <div class="section-toolbar"><button class="mini-button part-c-toggle" type="button">顯示答案</button></div>
+          <div class="answer-lines"><div class="line"><span class="answer-text">She does not eat cake.</span></div></div>
+        </section>
+        <section class="question">
+          <div class="question-row"><p class="prompt-text">10. 她不打棒球。</p></div>
+          <div class="section-toolbar"><button class="mini-button part-c-toggle" type="button">顯示答案</button></div>
+          <div class="answer-lines"><div class="line"><span class="answer-text">She does not play baseball.</span></div></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="page part-d-page">
+      <header class="page-header">
+        <h1 class="part-title">Part D: 照海報內容，寫出海報主題的事實。注意<span class="rule-hot">單字拼字抄寫</span>。每個句子的第一個字母要<span class="rule-hot">大寫</span>，句尾要加<span class="rule-hot">句號</span>。</h1>
+        <div class="section-toolbar" style="margin: 0;">
+          <button class="mini-button part-d-toggle is-active" type="button">隱藏所有句子</button>
+        </div>
+      </header>
+
+      <div class="part-d-layout">
+        <img class="poster-image" src="fly.png" alt="Beautiful Butterflies poster">
+
+        <div class="part-d-grid">
+          <section class="fact-card">
+            <p class="fact-text"><span class="rule-hot">B</span>utterflies have a long thin tube that they use to drink sweet nectar<span class="rule-hot">.</span></p>
+            <p class="translation">蝴蝶有一條又長又細的管子，牠們用它來吸甜甜的花蜜。</p>
+          </section>
+
+          <section class="fact-card">
+            <p class="fact-text"><span class="rule-hot">B</span>utterflies like to live in warm places like a garden<span class="rule-hot">.</span></p>
+            <p class="translation">蝴蝶喜歡住在像花園那樣溫暖的地方。</p>
+          </section>
+
+          <section class="fact-card">
+            <p class="fact-text"><span class="rule-hot">B</span>utterfly wings do not work if it is too cold<span class="rule-hot">.</span></p>
+            <p class="translation">如果天氣太冷，蝴蝶的翅膀就不能正常活動。</p>
+          </section>
+
+          <section class="fact-card">
+            <p class="fact-text"><span class="rule-hot">B</span>utterflies can be inside the pupa for a few days or more than a year<span class="rule-hot">.</span></p>
+            <p class="translation">蝴蝶可能在蛹裡待幾天，也可能超過一年。</p>
+          </section>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script>
+    document.querySelectorAll(".part-b-toggle").forEach((button) => {
+      button.addEventListener("click", () => {
+        const page = button.closest(".page");
+        const block = button.closest(".qa-block");
+        const showing = page.classList.toggle("show-help");
+        block.classList.toggle("show-help", showing);
+        button.textContent = showing ? "隱藏中文＋答案" : "顯示中文＋答案";
+        button.classList.toggle("is-active", showing);
+      });
+    });
+
+    document.querySelectorAll(".part-c-toggle").forEach((button) => {
+      button.addEventListener("click", () => {
+        const question = button.closest(".question");
+        const showing = question.classList.toggle("show-answer");
+        button.textContent = showing ? "隱藏答案" : "顯示答案";
+        button.classList.toggle("is-active", showing);
+      });
+    });
+
+    document.querySelectorAll(".part-d-toggle").forEach((button) => {
+      button.addEventListener("click", () => {
+        const page = button.closest(".part-d-page");
+        const hidden = page.classList.toggle("hide-sentences");
+        button.textContent = hidden ? "顯示所有句子" : "隱藏所有句子";
+        button.classList.toggle("is-active", hidden);
+      });
+    });
+  </script>
+</body>
+</html>

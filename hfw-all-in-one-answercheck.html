@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HFW &#20840;&#37096;&#35079;&#32722; &#26032;&#29256;</title>
+  <style>
+    :root {
+      --bg: #fffdf7;
+      --card: #ffffff;
+      --ink: #25322d;
+      --muted: #66756d;
+      --line: #dfe7df;
+      --main: #2f6f5f;
+      --soft: #edf7f2;
+      --good: #2f8f68;
+      --bad: #d65c4a;
+      --shadow: 0 8px 20px rgba(37, 50, 45, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Microsoft JhengHei", "PingFang TC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+    button {
+      font: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+    main {
+      width: min(920px, calc(100% - 20px));
+      margin: 0 auto;
+      padding: 16px 0 42px;
+    }
+    h1 {
+      margin: 0 0 14px;
+      color: var(--main);
+      font-size: clamp(1.65rem, 4.5vw, 2.45rem);
+      line-height: 1.08;
+    }
+    .questions {
+      display: grid;
+      gap: 14px;
+    }
+    .question {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      transition: border-color 140ms ease;
+    }
+    .question.answered-wrong { border-color: rgba(214, 92, 74, 0.5); }
+    .question.answered-correct { border-color: rgba(47, 143, 104, 0.4); }
+    .sentence-row {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+    }
+    .number {
+      min-width: 38px;
+      min-height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      background: var(--main);
+      color: #fff;
+      font-size: 0.96rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .number.checked {
+      background: #2563eb;
+      font-size: 1.2rem;
+    }
+    .sentence {
+      min-height: 58px;
+      display: block;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--soft);
+      font-size: clamp(1.16rem, 3.6vw, 1.78rem);
+      font-weight: 900;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .sentence-wrap {
+      display: grid;
+      gap: 8px;
+    }
+    .translation {
+      display: none;
+      padding: 0 4px;
+      color: var(--muted);
+      font-size: clamp(0.96rem, 2.4vw, 1.08rem);
+      font-weight: 800;
+      line-height: 1.45;
+    }
+    .translation.visible {
+      display: block;
+    }
+    .blank {
+      width: 4.2em;
+      max-width: 100%;
+      display: inline-block;
+      vertical-align: baseline;
+      margin: 0 0.16em;
+      border-bottom: 3px solid var(--ink);
+      color: transparent;
+      font-size: 1em;
+      line-height: inherit;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .choices {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .choice {
+      min-height: 50px;
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--main);
+      font-size: clamp(1rem, 2.6vw, 1.34rem);
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+    }
+    .choice:active { transform: scale(0.985); }
+    .choice.correct {
+      border-color: var(--good);
+      background: #c7f0d6;
+      color: #145f3e;
+    }
+    .choice.wrong {
+      border-color: var(--bad);
+      background: #fff0ed;
+      color: var(--bad);
+    }
+    .choice:disabled { cursor: default; }
+    .answer {
+      min-height: 1.7em;
+      padding: 2px 4px 0;
+      color: var(--muted);
+      font-size: clamp(0.92rem, 2.3vw, 1.06rem);
+      font-weight: 800;
+    }
+    .review-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin: 0 0 16px;
+    }
+    .mode-button {
+      min-height: 42px;
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--main);
+      padding: 7px 12px;
+      font-size: 1rem;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .mode-button.active {
+      border-color: var(--main);
+      background: var(--main);
+      color: #fff;
+    }
+    .mode-button.light { color: var(--muted); }
+    .summary {
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 800;
+      margin-left: auto;
+    }
+    .empty {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--muted);
+      font-size: 1.1rem;
+      font-weight: 900;
+      text-align: center;
+    }
+    @media (max-width: 760px) {
+      main {
+        width: min(100% - 12px, 920px);
+        padding-top: 10px;
+      }
+      .question { padding: 10px; }
+      .sentence-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .number {
+        min-width: 40px;
+        width: 40px;
+      }
+      .choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .summary {
+        width: 100%;
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>HFW &#20840;&#37096;&#35079;&#32722; &#26032;&#29256;</h1>
+    <div class="review-controls">
+      <button class="mode-button active" type="button" id="allMode">&#20840;&#37096;&#38988;&#30446;</button>
+      <button class="mode-button" type="button" id="wrongMode">&#37679;&#38988;&#35079;&#32722; <span id="wrongCount">0</span></button>
+      <button class="mode-button light" type="button" id="clearWrong">&#28165;&#38500;&#20316;&#31572;&#32000;&#37636;</button>
+      <div class="summary" id="summary"></div>
+    </div>
+    <div class="empty" id="emptyState" hidden>&#30446;&#21069;&#27794;&#26377;&#37679;&#38988;&#12290;</div>
+    <section class="questions" id="questions"></section>
+  </main>
+
+  <script>
+    const DATA = [
+      { answer: "any", sentence: "Do you have ____ seeds for our garden?", zh: "\u4f60\u6709\u4efb\u4f55\u53ef\u4ee5\u7a2e\u5728\u6211\u5011\u82b1\u5712\u7684\u7a2e\u5b50\u55ce\uff1f" },
+      { answer: "could", sentence: "____ you help me water the plant?", zh: "\u4f60\u53ef\u4ee5\u5e6b\u6211\u6f86\u9019\u682a\u690d\u7269\u55ce\uff1f" },
+      { answer: "does", sentence: "What ____ an ant eat?", zh: "\u87de\u87fb\u5403\u4ec0\u9ebc\uff1f" },
+      { answer: "down", sentence: "The seed falls ____.", zh: "\u7a2e\u5b50\u6389\u4e0b\u53bb\u3002" },
+      { answer: "get", sentence: "I ____ some water for the plant.", zh: "\u6211\u62ff\u4e00\u4e9b\u6c34\u7d66\u690d\u7269\u3002" },
+      { answer: "got", sentence: "I ____ a flower from Mom today.", zh: "\u6211\u4eca\u5929\u5f9e\u5abd\u5abd\u90a3\u88e1\u5f97\u5230\u4e00\u6735\u82b1\u3002" },
+      { answer: "her", sentence: "I see Mom. I wave to ____.", zh: "\u6211\u770b\u5230\u5abd\u5abd\u3002\u6211\u5411\u5979\u63ee\u624b\u3002" },
+      { answer: "him", sentence: "I see Dad. I talk to ____.", zh: "\u6211\u770b\u5230\u7238\u7238\u3002\u6211\u8ddf\u4ed6\u8aaa\u8a71\u3002" },
+      { answer: "if", sentence: "____ it rains today, we stay inside the school.", zh: "\u5982\u679c\u4eca\u5929\u4e0b\u96e8\uff0c\u6211\u5011\u5f85\u5728\u5b78\u6821\u88e1\u9762\u3002" },
+      { answer: "just", sentence: "It is ____ a little seed now.", zh: "\u5b83\u73fe\u5728\u53ea\u662f\u4e00\u9846\u5c0f\u7a2e\u5b50\u3002" },
+      { answer: "like", sentence: "I ____ grapes.", zh: "\u6211\u559c\u6b61\u8461\u8404\u3002" },
+      { answer: "little", sentence: "A ____ ant is on the leaf.", zh: "\u4e00\u96bb\u5c0f\u87de\u87fb\u5728\u8449\u5b50\u4e0a\u3002" },
+      { answer: "look", sentence: "____ at the butterfly!", zh: "\u770b\u90a3\u96bb\u8774\u8776\uff01" },
+      { answer: "love", sentence: "I ____ my school.", zh: "\u6211\u611b\u6211\u7684\u5b78\u6821\u3002" },
+      { answer: "make", sentence: "We ____ a flower card.", zh: "\u6211\u5011\u505a\u4e00\u5f35\u82b1\u5361\u3002" },
+      { answer: "many", sentence: "There are ____ ants under the tree.", zh: "\u6a39\u4e0b\u6709\u5f88\u591a\u87de\u87fb\u3002" },
+      { answer: "more", sentence: "I want ____ water because it is hot today.", zh: "\u56e0\u70ba\u4eca\u5929\u5f88\u71b1\uff0c\u6211\u60f3\u8981\u66f4\u591a\u6c34\u3002" },
+      { answer: "new", sentence: "I see a ____ flower.", zh: "\u6211\u770b\u5230\u4e00\u6735\u65b0\u958b\u7684\u82b1\u3002" },
+      { answer: "now", sentence: "I go to school ____.", zh: "\u6211\u73fe\u5728\u53bb\u5b78\u6821\u3002" },
+      { answer: "other", sentence: "I see the ____ flower.", zh: "\u6211\u770b\u5230\u53e6\u4e00\u6735\u82b1\u3002" },
+      { answer: "our", sentence: "____ garden has many flowers.", zh: "\u6211\u5011\u7684\u82b1\u5712\u6709\u5f88\u591a\u82b1\u3002" },
+      { answer: "out", sentence: "We go ____ to play.", zh: "\u6211\u5011\u51fa\u53bb\u73a9\u3002" },
+      { answer: "saw", sentence: "I ____ a ladybug on the leaf.", zh: "\u6211\u770b\u5230\u4e00\u96bb\u74e2\u87f2\u5728\u8449\u5b50\u4e0a\u3002" },
+      { answer: "school", sentence: "I go to ____ today.", zh: "\u6211\u4eca\u5929\u53bb\u5b78\u6821\u3002" },
+      { answer: "second", sentence: "This is the ____ flower.", zh: "\u9019\u662f\u7b2c\u4e8c\u6735\u82b1\u3002" },
+      { answer: "see", sentence: "I can ____ a bee on the flower.", zh: "\u6211\u770b\u5f97\u898b\u4e00\u96bb\u871c\u8702\u5728\u82b1\u4e0a\u3002" },
+      { answer: "some", sentence: "I have ____ water.", zh: "\u6211\u6709\u4e00\u4e9b\u6c34\u3002" },
+      { answer: "than", sentence: "A butterfly is bigger ____ an ant on the leaf.", zh: "\u5728\u8449\u5b50\u4e0a\u7684\u8774\u8776\u6bd4\u87de\u87fb\u5927\u3002" },
+      { answer: "their", sentence: "____ plant is green.", zh: "\u4ed6\u5011\u7684\u690d\u7269\u662f\u7da0\u8272\u7684\u3002" },
+      { answer: "them", sentence: "I see two ants. I can help ____.", zh: "\u6211\u770b\u5230\u5169\u96bb\u87de\u87fb\u3002\u6211\u53ef\u4ee5\u5e6b\u5b83\u5011\u3002" },
+      { answer: "there", sentence: "____ is an ant under the leaf.", zh: "\u8449\u5b50\u4e0b\u9762\u6709\u4e00\u96bb\u87de\u87fb\u3002" },
+      { answer: "these", sentence: "____ are leaves.", zh: "\u9019\u4e9b\u662f\u8449\u5b50\u3002" },
+      { answer: "they", sentence: "____ are little bugs.", zh: "\u7260\u5011\u662f\u5c0f\u6606\u87f2\u3002" },
+      { answer: "third", sentence: "This is the ____ seed.", zh: "\u9019\u662f\u7b2c\u4e09\u9846\u7a2e\u5b50\u3002" },
+      { answer: "this", sentence: "____ is an ant.", zh: "\u9019\u662f\u4e00\u96bb\u87de\u87fb\u3002" },
+      { answer: "those", sentence: "____ are ladybugs.", zh: "\u90a3\u4e9b\u662f\u74e2\u87f2\u3002" },
+      { answer: "today", sentence: "____ is sunny.", zh: "\u4eca\u5929\u662f\u6674\u5929\u3002" },
+      { answer: "together", sentence: "We read ____.", zh: "\u6211\u5011\u4e00\u8d77\u6717\u8b80\u3002" },
+      { answer: "two", sentence: "I see ____ bees.", zh: "\u6211\u770b\u5230\u5169\u96bb\u871c\u8702\u3002" },
+      { answer: "under", sentence: "The ant is ____ the leaf.", zh: "\u87de\u87fb\u5728\u8449\u5b50\u4e0b\u9762\u3002" },
+      { answer: "very", sentence: "The butterfly is ____ pretty.", zh: "\u90a3\u96bb\u8774\u8776\u975e\u5e38\u6f02\u4eae\u3002" },
+      { answer: "want", sentence: "I ____ some water.", zh: "\u6211\u60f3\u8981\u4e00\u4e9b\u6c34\u3002" },
+      { answer: "what", sentence: "____ is this insect?", zh: "\u9019\u662f\u4ec0\u9ebc\u6606\u87f2\uff1f" },
+      { answer: "when", sentence: "____ does the egg hatch in warm weather?", zh: "\u5728\u6eab\u6696\u7684\u5929\u6c23\u88e1\uff0c\u86cb\u4ec0\u9ebc\u6642\u5019\u5b75\u5316\uff1f" },
+      { answer: "which", sentence: "____ insect has wings?", zh: "\u54ea\u4e00\u7a2e\u6606\u87f2\u6709\u7fc5\u8180\uff1f" },
+      { answer: "why", sentence: "____ do ants work together to carry food?", zh: "\u87de\u87fb\u70ba\u4ec0\u9ebc\u8981\u4e00\u8d77\u642c\u98df\u7269\uff1f" },
+      { answer: "will", sentence: "The caterpillar ____ be a butterfly one day.", zh: "\u6bdb\u6bdb\u87f2\u6709\u4e00\u5929\u6703\u8b8a\u6210\u8774\u8776\u3002" },
+      { answer: "would", sentence: "I ____ like some water.", zh: "\u6211\u60f3\u8981\u4e00\u4e9b\u6c34\u3002" },
+      { answer: "because", sentence: "Mom likes this flower _____ it is pretty.", zh: "\u5abd\u5abd\u559c\u6b61\u9019\u6735\u82b1\uff0c\u56e0\u70ba\u5b83\u5f88\u6f02\u4eae\u3002" },
+      { answer: "which", sentence: "_____ insect has wings?", zh: "\u54ea\u4e00\u7a2e\u6606\u87f2\u6709\u7fc5\u8180\uff1f" },
+      { answer: "does", sentence: "_____ Dad like school?", zh: "\u7238\u7238\u559c\u6b61\u5b78\u6821\u55ce\uff1f" },
+      { answer: "would", sentence: "I _____ like to see the butterfly.", zh: "\u6211\u60f3\u8981\u770b\u770b\u90a3\u96bb\u8774\u8776\u3002" },
+      { answer: "above", sentence: "Look! There is a butterfly flying _____ your head!", zh: "\u770b\uff01\u6709\u4e00\u96bb\u8774\u8776\u98db\u5728\u4f60\u7684\u982d\u4e0a\u65b9\uff01" }
+    ];
+
+    const words = [...new Set(DATA.map((item) => item.answer))];
+    const questionsEl = document.querySelector("#questions");
+    const allModeButton = document.querySelector("#allMode");
+    const wrongModeButton = document.querySelector("#wrongMode");
+    const clearWrongButton = document.querySelector("#clearWrong");
+    const wrongCount = document.querySelector("#wrongCount");
+    const summary = document.querySelector("#summary");
+    const emptyState = document.querySelector("#emptyState");
+    const wrongStorageKey = "hfw_wrong_words_answercheck_v1";
+    const correctStorageKey = "hfw_correct_words_answercheck_v1";
+    let mode = "all";
+    let wrongWords = new Set(JSON.parse(localStorage.getItem(wrongStorageKey) || "[]").filter((word) => words.includes(word)));
+    let correctWords = new Set(JSON.parse(localStorage.getItem(correctStorageKey) || "[]").filter((word) => words.includes(word)));
+
+    function saveWrongWords() {
+      localStorage.setItem(wrongStorageKey, JSON.stringify([...wrongWords]));
+    }
+
+    function saveCorrectWords() {
+      localStorage.setItem(correctStorageKey, JSON.stringify([...correctWords]));
+    }
+
+    function updateControls(visibleCount) {
+      wrongCount.textContent = String(wrongWords.size);
+      allModeButton.classList.toggle("active", mode === "all");
+      wrongModeButton.classList.toggle("active", mode === "wrong");
+      summary.textContent = mode === "wrong"
+        ? `\u932f\u984c ${visibleCount} \u984c`
+        : `\u7b54\u5c0d ${correctWords.size} / ${DATA.length}`;
+    }
+
+    function seededPick(seed, offset) {
+      return words[(seed * 7 + offset * 11 + 5) % words.length];
+    }
+
+    function shuffle(items, seed) {
+      const copy = [...items];
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = (seed * 13 + i * 17) % (i + 1);
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function choicesFor(item, questionIndex) {
+      const set = new Set([item.answer]);
+      let offset = 1;
+      while (set.size < 4) {
+        const candidate = seededPick(questionIndex + 1, offset);
+        if (candidate !== item.answer) {
+          set.add(candidate);
+        }
+        offset += 1;
+      }
+      return shuffle([...set], questionIndex + 3);
+    }
+
+    function renderSentence(target, text) {
+      target.innerHTML = "";
+      const parts = text.split(/_{4,5}/);
+      parts.forEach((part, index) => {
+        target.append(document.createTextNode(part));
+        if (index < parts.length - 1) {
+          const blank = document.createElement("span");
+          blank.className = "blank";
+          blank.setAttribute("aria-hidden", "true");
+          blank.textContent = "\u00a0";
+          target.append(blank);
+        }
+      });
+    }
+
+    function renderQuestions() {
+      questionsEl.innerHTML = "";
+      const fragment = document.createDocumentFragment();
+      const rows = DATA
+        .map((item, index) => ({ item, index }))
+        .filter(({ item }) => mode === "all" || wrongWords.has(item.answer));
+
+      emptyState.hidden = rows.length > 0;
+      questionsEl.hidden = rows.length === 0;
+      updateControls(rows.length);
+
+      rows.forEach(({ item, index }) => {
+        const article = document.createElement("article");
+        article.className = "question";
+
+        const sentenceRow = document.createElement("div");
+        sentenceRow.className = "sentence-row";
+
+        const number = document.createElement("div");
+        number.className = "number";
+        if (correctWords.has(item.answer)) {
+          number.classList.add("checked");
+          number.textContent = "\u2713";
+        } else {
+          number.textContent = String(index + 1);
+        }
+
+        const sentenceWrap = document.createElement("div");
+        sentenceWrap.className = "sentence-wrap";
+
+        const sentence = document.createElement("div");
+        sentence.className = "sentence";
+        renderSentence(sentence, item.sentence);
+
+        const translation = document.createElement("div");
+        translation.className = "translation";
+        translation.textContent = item.zh;
+
+        const answer = document.createElement("div");
+        answer.className = "answer";
+
+        if (correctWords.has(item.answer)) {
+          article.classList.add("answered-correct");
+          translation.classList.add("visible");
+          answer.textContent = `\u7b54\u6848\uff1a${item.answer}\uff5c${item.zh}`;
+        }
+
+        sentenceWrap.append(sentence, translation);
+        sentenceRow.append(number, sentenceWrap);
+
+        const choices = document.createElement("div");
+        choices.className = "choices";
+
+        choicesFor(item, index).forEach((choice) => {
+          const button = document.createElement("button");
+          button.className = "choice";
+          button.type = "button";
+          button.textContent = choice;
+
+          if (correctWords.has(item.answer)) {
+            button.disabled = true;
+            if (choice === item.answer) {
+              button.classList.add("correct");
+            }
+          }
+
+          button.addEventListener("click", () => {
+            if (article.dataset.done === "true") return;
+
+            article.dataset.done = "true";
+            const correct = choice === item.answer;
+            button.classList.add(correct ? "correct" : "wrong");
+            translation.classList.add("visible");
+
+            if (correct) {
+              article.classList.remove("answered-wrong");
+              article.classList.add("answered-correct");
+              number.classList.add("checked");
+              number.textContent = "\u2713";
+              correctWords.add(item.answer);
+              wrongWords.delete(item.answer);
+            } else {
+              article.classList.remove("answered-correct");
+              article.classList.add("answered-wrong");
+              correctWords.delete(item.answer);
+              wrongWords.add(item.answer);
+            }
+
+            saveCorrectWords();
+            saveWrongWords();
+
+            article.querySelectorAll(".choice").forEach((choiceButton) => {
+              choiceButton.disabled = true;
+              if (choiceButton.textContent === item.answer) {
+                choiceButton.classList.add("correct");
+              }
+            });
+
+            answer.textContent = `\u7b54\u6848\uff1a${item.answer}\uff5c${item.zh}`;
+            updateControls(mode === "wrong" ? wrongWords.size : DATA.length);
+          });
+
+          choices.append(button);
+        });
+
+        article.append(sentenceRow, choices, answer);
+        fragment.append(article);
+      });
+
+      questionsEl.append(fragment);
+    }
+
+    allModeButton.addEventListener("click", () => {
+      mode = "all";
+      renderQuestions();
+    });
+
+    wrongModeButton.addEventListener("click", () => {
+      mode = "wrong";
+      renderQuestions();
+    });
+
+    clearWrongButton.addEventListener("click", () => {
+      wrongWords.clear();
+      correctWords.clear();
+      saveCorrectWords();
+      saveWrongWords();
+      renderQuestions();
+    });
+
+    renderQuestions();
+  </script>
+</body>
+</html>

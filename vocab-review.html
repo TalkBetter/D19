@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>單字複習 App（3-17週）</title>
+<style>
+  :root{
+    --bg:#f4f1ea; --card:#ffffff; --ink:#2b2b2b; --muted:#7a7468;
+    --accent:#3b7d6e; --accent-dark:#2c5e53; --hf:#ffe14d; --hf-soft:#fff6c2;
+    --danger:#d9534f; --line:#e3ddd0; --good:#4a9d7f;
+    --shadow:0 2px 10px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:"PingFang TC","Microsoft JhengHei","Segoe UI",system-ui,sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.5}
+  header{position:sticky;top:0;z-index:20;background:var(--accent);color:#fff;
+    padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  header h1{margin:0;font-size:1.25rem;font-weight:700;letter-spacing:.5px}
+  header .sub{font-size:.82rem;opacity:.85;margin-top:2px}
+
+  .weeks-wrap{background:#fff;border-bottom:1px solid var(--line);padding:12px 16px}
+  .weeks-label{font-size:.85rem;color:var(--muted);font-weight:600;margin-bottom:8px}
+  .weeks{display:flex;flex-wrap:wrap;gap:8px;max-width:760px;margin:0 auto}
+  .weeks button{position:relative;flex:1 1 calc(20% - 8px);min-width:58px;border:1px solid var(--line);
+    background:#fff;color:var(--ink);padding:11px 6px;border-radius:12px;font-size:1rem;cursor:pointer;
+    font-weight:700;transition:.15s;text-align:center}
+  .weeks button:hover{border-color:var(--accent)}
+  .weeks button.active{background:var(--accent);color:#fff;border-color:var(--accent);
+    box-shadow:0 2px 8px rgba(59,125,110,.3)}
+  .weeks button.review{color:var(--muted);font-weight:600}
+  .weeks button.review small{display:block;font-size:.62rem;font-weight:500;margin-top:1px}
+  .weeks button .dot{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;line-height:20px;
+    background:var(--danger);color:#fff;border-radius:10px;font-size:.72rem;padding:0 5px;
+    box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  @media(min-width:560px){.weeks button{flex:0 0 auto;min-width:64px}}
+
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 16px;
+    max-width:760px;margin:0 auto}
+  .toolbar .title{font-size:1.2rem;font-weight:700;flex:1 1 auto}
+  .toggle{display:flex;align-items:center;gap:6px;font-size:.95rem;color:var(--muted);
+    cursor:pointer;user-select:none}
+  .toggle input{width:38px;height:22px;appearance:none;background:#cfc9bb;border-radius:11px;
+    position:relative;cursor:pointer;transition:.2s;outline:none}
+  .toggle input:checked{background:var(--accent)}
+  .toggle input::after{content:"";position:absolute;width:18px;height:18px;background:#fff;
+    border-radius:50%;top:2px;left:2px;transition:.2s}
+  .toggle input:checked::after{left:18px}
+
+  main{max-width:760px;margin:0 auto;padding:4px 16px 90px}
+  .note{background:var(--hf-soft);border:1px dashed #d9c95a;border-radius:10px;
+    padding:18px;text-align:center;color:#8a7a1a;font-weight:600;margin-top:10px;font-size:1.1rem}
+
+  .legend{font-size:.85rem;color:var(--muted);margin:2px 0 12px;display:flex;
+    align-items:center;gap:6px;flex-wrap:wrap}
+  .legend .sw{width:14px;height:14px;border-radius:3px;background:var(--hf);display:inline-block;
+    border:1px solid #d9c95a}
+  .poshelp{font-size:.85rem;color:var(--muted)}
+  .poshelp summary{cursor:pointer;color:var(--accent);font-weight:600;list-style:none}
+  .poshelp summary::-webkit-details-marker{display:none}
+  .poshelp summary::before{content:"ⓘ 詞性說明"}
+  .poshelp[open] summary::before{content:"▾ 詞性說明"}
+  .poshelp .pp{margin-top:6px;line-height:1.9;color:#555}
+
+  .word{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:16px 14px;margin-bottom:10px;box-shadow:var(--shadow);
+    transition:.15s}
+  .word.hf{background:#fffdf2;border-color:#ecd96a}
+  .word.unknown{border-color:var(--danger);box-shadow:0 0 0 2px rgba(217,83,79,.12)}
+  .word .enline{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .word .en{font-size:1.7rem;font-weight:700;letter-spacing:.3px}
+  .word .pos{font-size:.85rem;color:#fff;background:var(--accent);padding:2px 9px;border-radius:7px;
+    font-weight:600;font-style:italic}
+  .word.hf .en::after{content:"高頻";font-size:.65rem;background:var(--hf);color:#7a6a00;
+    margin-left:4px;padding:2px 6px;border-radius:6px;font-weight:700;vertical-align:middle}
+  .word .zh{font-size:1.35rem;color:#333;margin-top:6px}
+  .word .en.hidden{filter:blur(9px);cursor:pointer;user-select:none}
+  .word .body{flex:1 1 auto;min-width:0}
+  .word .mk{flex:0 0 auto;border:none;background:#f0ece2;color:var(--muted);width:50px;height:50px;
+    border-radius:50%;font-size:1.5rem;cursor:pointer;transition:.15s;display:grid;place-items:center}
+  .word.unknown .mk{background:var(--danger);color:#fff}
+
+  .speak{flex:0 0 auto;border:none;background:#eaf3f0;color:var(--accent-dark);width:50px;height:50px;
+    border-radius:50%;font-size:1.35rem;cursor:pointer;display:grid;place-items:center}
+  .speak:active{background:var(--accent);color:#fff}
+
+  .empty{text-align:center;color:var(--muted);padding:50px 20px;font-size:1.15rem}
+  .empty .big{font-size:2.8rem;margin-bottom:8px}
+
+  .stat{font-size:.95rem;color:var(--muted);margin-bottom:10px}
+  .clearbtn{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;
+    padding:6px 12px;font-size:.85rem;cursor:pointer;margin-left:8px}
+
+  /* flashcard */
+  #cardView{display:none;flex-direction:column;align-items:center;gap:18px;padding-top:14px}
+  .flash{width:100%;max-width:460px;height:280px;perspective:1200px;cursor:pointer}
+  .flash-inner{position:relative;width:100%;height:100%;transition:transform .5s;
+    transform-style:preserve-3d}
+  .flash.flipped .flash-inner{transform:rotateY(180deg)}
+  .face{position:absolute;inset:0;backface-visibility:hidden;background:var(--card);
+    border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);
+    display:grid;place-items:center;padding:20px;text-align:center}
+  .face.hf{background:#fffdf2;border-color:#ecd96a}
+  .face .en{font-size:3rem;font-weight:800}
+  .face .posbig{font-size:1.1rem;color:var(--accent);font-style:italic;margin-top:8px;font-weight:600}
+  .face .zh{font-size:2.4rem;font-weight:700;color:var(--accent-dark);transform:rotateY(180deg)}
+  .face.back{transform:rotateY(180deg)}
+  .flash-hint{font-size:.9rem;color:var(--muted)}
+  .nav{display:flex;gap:12px;align-items:center}
+  .nav button{border:none;background:var(--accent);color:#fff;width:58px;height:58px;border-radius:50%;
+    font-size:1.5rem;cursor:pointer;box-shadow:var(--shadow)}
+  .nav button.ghost{background:#fff;color:var(--accent);border:1px solid var(--line)}
+  .nav .count{font-size:1.05rem;color:var(--muted);min-width:70px;text-align:center}
+  .cardmk{border:1px solid var(--line);background:#fff;border-radius:20px;padding:11px 20px;
+    font-size:1rem;font-weight:600;cursor:pointer;color:var(--danger)}
+  .cardmk.on{background:var(--danger);color:#fff;border-color:var(--danger)}
+
+  /* bottom mode switch */
+  .modebar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);
+    display:flex;z-index:30;box-shadow:0 -2px 10px rgba(0,0,0,.05)}
+  .modebar button{flex:1;border:none;background:none;padding:12px 4px;font-size:.9rem;
+    color:var(--muted);cursor:pointer;font-weight:600}
+  .modebar button.active{color:var(--accent)}
+  .modebar button .ic{display:block;font-size:1.4rem;margin-bottom:2px}
+</style>
+</head>
+<body>
+<header>
+  <h1>📚 二下英文單字複習</h1>
+  <div class="sub">第 3–17 週 · 點 ★ 標記不會的單字</div>
+</header>
+
+<div class="weeks-wrap">
+  <div class="weeks-label">選擇週次</div>
+  <div class="weeks" id="weekBar"></div>
+</div>
+
+<div class="toolbar">
+  <span class="title" id="viewTitle"></span>
+  <label class="toggle" id="blurToggleWrap">
+    <input type="checkbox" id="blurToggle"> <span>遮英文</span>
+  </label>
+</div>
+
+<main>
+  <div class="legend">
+    <span class="sw"></span> 黃底＝高頻單字（High Frequency Words）
+    <details class="poshelp">
+      <summary></summary>
+      <div class="pp">n. 名詞 · v. 動詞 · adj. 形容詞 · adv. 副詞 · pron. 代名詞 · prep. 介系詞 · conj. 連接詞 · aux. 助動詞</div>
+    </details>
+  </div>
+  <div id="listView"></div>
+  <div id="cardView"></div>
+</main>
+
+<nav class="modebar">
+  <button data-mode="list" class="active"><span class="ic">📋</span>清單</button>
+  <button data-mode="review"><span class="ic">⭐</span>我不會的<span id="reviewBadge"></span></button>
+</nav>
+
+<script>
+/* ---------- 單字資料 [英文, 中文, 詞性, 是否高頻] ---------- */
+const DATA = {
+ 3:[["any","任何","adj.",1],["does","（他/她/它）做","v.",1],["down","向下／往下","adv.",1],["get","得到／拿到","v.",1],["got","得到／拿到（過去式）","v.",1],["seed","種子","n."],["plant","植物","n."],["grow","生長","v."],["soil","土壤","n."],["water","水","n."],["sun","陽光","n."],["tiny","微小的","adj."],["big","巨大的","adj."],["size","尺寸","n."],["dig","挖","v."]],
+ 4:[["her","她（受格）","pron.",1],["him","他（受格）","pron.",1],["if","如果（表示條件）","conj.",1],["just","只是／僅僅","adv.",1],["look","看起來","v.",1],["roots","根部","n."],["stem","莖","n."],["rain","下雨","n."],["sunlight","陽光","n."],["tall","高的","adj."],["green","綠色","adj."],["thorny","多刺的","adj."],["time","時間","n."],["air","空氣","n."],["warmth","溫暖","n."]],
+ 5:[["new","新的","adj.",1],["now","現在","adv.",1],["our","我們的","pron.",1],["out","出去","adv.",1],["school","學校","n.",1],["roots","根","n."],["stem","莖","n."],["wood","木頭","n."],["mud","泥土","n."],["sand","沙","n."],["season","季節","n."],["sharp","尖銳的","adj."],["weather","天氣","n."],["vegetable","蔬菜","n."],["grass","草","n."]],
+ 6:[["second","第二","adj.",1],["than","比…","conj.",1],["their","他們的","pron.",1],["them","他們","pron.",1],["there","那裡","adv.",1],["leaf","葉子","n."],["leaves","葉子（複數）","n."],["flower","花朵","n."],["petal","花瓣","n."],["plant","植物","n."],["fruit","水果","n."],["vegetable","蔬菜","n."],["tree","樹","n."],["soft","柔軟的","adj."],["smooth","平滑的","adj."]],
+ 7:[["third","第三","adj.",1],["today","今天","adv.",1],["two","二","n.",1],["under","在……下面","prep.",1],["would","想要／願意","aux.",1],["life","生命","n."],["cycle","循環","n."],["help","幫助","v."],["sprout","萌芽","v."],["bud","花苞","n."],["bloom","開花","v."],["inside","裡面","adv."],["outside","外面","adv."],["garden","花園","n."],["sunshine","陽光","n."]],
+ 8:[["does","做","v.",1],["look","看起來","v.",1],["new","新的","adj.",1],["there","那裡","adv.",1],["would","將會","aux.",1],["creative","有創造力的","adj."],["worm","蚯蚓","n."],["lily","百合花","n."],["rose","玫瑰花","n."],["twigs","細枝","n."],["branch","樹枝","n."],["nature","大自然","n."],["wide","寬的","adj."],["thin","瘦的","adj."],["trunk","樹幹","n."]],
+ 9:[],
+ 10:[["look","看","v.",1],["see","看見","v.",1],["saw","看見了","v.",1],["does","做（do的第三人稱單數）","v.",1],["like","喜歡","v.",1],["senses","感官（複數）","n."],["hear","聽到","v."],["listen","聆聽","v."],["noise","噪音","n."],["noisy","吵鬧的","adj."],["sight","視覺","n."],["eyes","眼睛","n."],["ears","耳朵","n."],["loud","大聲的","adj."],["quiet","安靜的","adj."]],
+ 11:[["could","可以（過去式）","aux.",1],["like","喜歡","v.",1],["love","愛","v.",1],["want","想要","v.",1],["would","會（過去式）","aux.",1],["smell","聞、氣味","v."],["nose","鼻子","n."],["sugar","糖","n."],["spicy","辣的","adj."],["taste","味道、品嘗","v."],["thirsty","口渴的","adj."],["tongue","舌頭","n."],["sour","酸的","adj."],["sweet","甜的","adj."],["crunchy","酥脆的","adj."]],
+ 12:[["many","許多的","adj.",1],["more","更多的","adj.",1],["other","其他的","adj.",1],["together","一起","adv.",1],["which","哪個","pron.",1],["touch","觸摸／碰觸","v."],["fingers","手指","n."],["soft","柔軟的","adj."],["hard","堅硬的","adj."],["rough","粗糙的","adj."],["bumpy","崎嶇的","adj."],["furry","毛茸茸的","adj."],["fluffy","蓬鬆的","adj."],["sticky","黏的","adj."],["slimy","黏滑的","adj."]],
+ 13:[["this","這個","pron.",1],["what","什麼","pron.",1],["these","這些","pron.",1],["those","那些","pron.",1],["which","哪一個／哪一些","pron.",1],["cold","寒冷的","adj."],["cool","涼爽的","adj."],["dry","乾燥的","adj."],["salty","鹹的","adj."],["yucky","難吃的／噁心的","adj."],["oily","油膩的","adj."],["fresh","新鮮的","adj."],["bit","一點／一小部分","n."],["bite","咬（動詞）／一口（名詞）","v."],["fat","胖的／肥的","adj."]],
+ 14:[],
+ 15:[["little","小的","adj.",1],["under","在……下面","prep.",1],["some","一些","adj.",1],["they","他們","pron.",1],["when","什麼時候","adv.",1],["ant","螞蟻","n."],["head","頭部","n."],["thorax","胸部","n."],["abdomen","腹部","n."],["legs","腳","n."],["antennae","觸角","n."],["anthill","蟻丘","n."],["outside","外面","adv."],["inside","裡面","adv."],["tiny","極小的","adj."]],
+ 16:[["when","什麼時候","adv.",1],["those","那些","pron.",1],["these","這些","pron.",1],["than","比","conj.",1],["together","一起","adv.",1],["ladybug","瓢蟲","n."],["insect","昆蟲","n."],["wings","翅膀","n."],["spots","斑點","n."],["antennae","觸角","n."],["egg","蛋","n."],["larva","幼蟲","n."],["pupa","蛹","n."],["adult","成蟲","n."],["hatch","孵化","v."]],
+ 17:[["very","非常","adv.",1],["why","為什麼","adv.",1],["will","將會","aux.",1],["make","製作","v.",1],["new","新的","adj.",1],["caterpillar","毛毛蟲","n."],["butterfly","蝴蝶","n."],["forest","森林","n."],["garden","花園","n."],["fly","飛","v."],["little","小的","adj."],["chrysalis","蛹","n."],["cute","可愛的","adj."],["leaves","樹葉","n."],["hatch","孵化","v."]]
+};
+const REVIEW_WEEKS = {9:"本週為單元總結週，複習前幾週單字", 14:"本週為單元總結複習 Week 7–Week 12 單字，無更新單字"};
+
+/* ---------- 狀態與儲存 ---------- */
+const LS_UNKNOWN = "vocab_unknown_v1";
+let unknown = new Set(JSON.parse(localStorage.getItem(LS_UNKNOWN) || "[]"));
+function saveUnknown(){ localStorage.setItem(LS_UNKNOWN, JSON.stringify([...unknown])); }
+const keyOf = (w,en,zh)=> `${w}|${en}|${zh}`;          // 同一字在不同週分開記錄
+function isUnknown(k){ return unknown.has(k); }
+function toggleUnknown(k){ unknown.has(k)?unknown.delete(k):unknown.add(k); saveUnknown(); }
+
+let curWeek = 3, mode = "list", cardIdx = 0, cardFlipped=false;
+const weeks = Object.keys(DATA).map(Number);
+
+/* 統一資料格式為 [en, zh, pos, hf, wk] */
+function weekItems(wk){ return DATA[wk].map(([en,zh,pos,hf])=>[en,zh,pos||"",hf||0,wk]); }
+
+/* ---------- 發音 ---------- */
+function speak(en){
+  if(!("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(en);
+  u.lang="en-US"; u.rate=.85; speechSynthesis.speak(u);
+}
+
+/* ---------- 週次按鈕 ---------- */
+function unknownCountInWeek(wk){
+  return DATA[wk].filter(([en,zh])=>isUnknown(keyOf(wk,en,zh))).length;
+}
+function buildWeekBar(){
+  const bar = document.getElementById("weekBar");
+  bar.innerHTML="";
+  weeks.forEach(wk=>{
+    const b=document.createElement("button");
+    const cnt=unknownCountInWeek(wk);
+    const isReview = DATA[wk].length===0;
+    b.innerHTML = `W${wk}` + (isReview?`<small>複習週</small>`:"") + (cnt?`<span class="dot">${cnt}</span>`:"");
+    if(isReview) b.classList.add("review");
+    if(wk===curWeek && mode!=="review") b.classList.add("active");
+    b.onclick=()=>{ curWeek=wk; if(mode==="review"){setMode("list");} render(); };
+    bar.appendChild(b);
+  });
+}
+
+/* ---------- 清單檢視 ---------- */
+function renderList(items, wk, title){
+  document.getElementById("viewTitle").textContent = title;
+  document.getElementById("listView").style.display="block";
+  document.getElementById("cardView").style.display="none";
+  document.querySelector(".legend").style.display = items.some(i=>i[3])?"flex":"none";
+  const blur = document.getElementById("blurToggle").checked;
+  const host = document.getElementById("listView");
+
+  if(REVIEW_WEEKS[wk] && mode!=="review"){
+    host.innerHTML = `<div class="note">📝 ${REVIEW_WEEKS[wk]}</div>`;
+    return;
+  }
+  if(items.length===0){
+    host.innerHTML = `<div class="empty"><div class="big">🎉</div>目前沒有單字</div>`;
+    return;
+  }
+  host.innerHTML = items.map(it=>{
+    const [en,zh,pos,hf,w] = it;
+    const k = keyOf(w,en,zh);
+    const un = isUnknown(k);
+    const wkTag = mode==="review" ? `<span style="font-size:.8rem;color:var(--muted)"> · W${w}</span>` : "";
+    return `<div class="word ${hf?'hf':''} ${un?'unknown':''}">
+      <button class="speak" onclick="speak('${en.replace(/'/g,"\\'")}')" title="發音">🔊</button>
+      <div class="body">
+        <div class="enline"><span class="en ${blur?'hidden':''}" onclick="this.classList.toggle('hidden')">${en}</span>${pos?`<span class="pos">${pos}</span>`:''}${wkTag}</div>
+        <div class="zh">${zh}</div>
+      </div>
+      <button class="mk" title="標記不會" onclick="markFromList('${k.replace(/'/g,"\\'")}',this)">${un?'★':'☆'}</button>
+    </div>`;
+  }).join("");
+}
+function markFromList(k,btn){
+  toggleUnknown(k);
+  const card=btn.closest(".word");
+  card.classList.toggle("unknown");
+  btn.textContent = card.classList.contains("unknown")?'★':'☆';
+  buildWeekBar(); updateReviewBadge();
+  if(mode==="review") render();   // 取消標記後即時移除
+}
+
+/* ---------- 我不會的（跨週彙整） ---------- */
+function allUnknownItems(){
+  const out=[];
+  weeks.forEach(wk=> DATA[wk].forEach(([en,zh,pos,hf])=>{
+    if(isUnknown(keyOf(wk,en,zh))) out.push([en,zh,pos||"",hf||0,wk]);
+  }));
+  return out;
+}
+function updateReviewBadge(){
+  const n=unknown.size;
+  document.getElementById("reviewBadge").innerHTML = n?` <span style="background:var(--danger);color:#fff;border-radius:9px;padding:0 6px;font-size:.72rem">${n}</span>`:"";
+}
+
+/* ---------- 閃卡 ---------- */
+function currentCardSet(){
+  return mode==="review" ? allUnknownItems() : weekItems(curWeek);
+}
+function renderCard(){
+  document.getElementById("listView").style.display="none";
+  document.querySelector(".legend").style.display="none";
+  const view=document.getElementById("cardView");
+  view.style.display="flex";
+  const set=currentCardSet();
+  document.getElementById("viewTitle").textContent =
+     (mode==="review"?"⭐ 我不會的單字":"W"+curWeek+" 閃卡測驗") + `（${set.length}）`;
+
+  if(set.length===0){
+    view.innerHTML=`<div class="empty"><div class="big">${mode==='review'?'😎':'📭'}</div>${mode==='review'?'太棒了！沒有不會的單字':'本週沒有單字'}</div>`;
+    return;
+  }
+  if(cardIdx>=set.length) cardIdx=0;
+  const [en,zh,pos,hf,wk]=set[cardIdx];
+  const k=keyOf(wk,en,zh);
+  const un=isUnknown(k);
+  view.innerHTML=`
+    <div class="flash ${cardFlipped?'flipped':''}" id="flash">
+      <div class="flash-inner">
+        <div class="face front ${hf?'hf':''}">
+          <div><div class="en">${en}</div>${pos?`<div class="posbig">${pos}</div>`:''}${hf?'<div style="font-size:.8rem;color:#a08c00;margin-top:6px">高頻單字</div>':''}</div>
+        </div>
+        <div class="face back"><div class="zh">${zh}</div></div>
+      </div>
+    </div>
+    <div class="flash-hint">點卡片翻面 · W${wk}</div>
+    <div class="nav">
+      <button class="ghost" onclick="prevCard()">‹</button>
+      <button class="ghost" onclick="speak('${en.replace(/'/g,"\\'")}')" title="發音">🔊</button>
+      <span class="count">${cardIdx+1} / ${set.length}</span>
+      <button onclick="nextCard()">›</button>
+    </div>
+    <button class="cardmk ${un?'on':''}" onclick="cardMark('${k.replace(/'/g,"\\'")}')">${un?'★ 已標記不會':'☆ 標記為不會'}</button>
+  `;
+  document.getElementById("flash").onclick=()=>{ cardFlipped=!cardFlipped;
+    document.getElementById("flash").classList.toggle("flipped"); };
+}
+function nextCard(){ const n=currentCardSet().length; cardIdx=(cardIdx+1)%n; cardFlipped=false; renderCard(); }
+function prevCard(){ const n=currentCardSet().length; cardIdx=(cardIdx-1+n)%n; cardFlipped=false; renderCard(); }
+function cardMark(k){ toggleUnknown(k); buildWeekBar(); updateReviewBadge(); renderCard(); }
+
+/* ---------- 模式切換 ---------- */
+function setMode(m){
+  mode=m; cardIdx=0; cardFlipped=false;
+  document.querySelectorAll(".modebar button").forEach(b=>b.classList.toggle("active",b.dataset.mode===m));
+  document.getElementById("blurToggleWrap").style.display = (m==="list"||m==="review")?"flex":"none";
+  render();
+}
+document.querySelectorAll(".modebar button").forEach(b=> b.onclick=()=>setMode(b.dataset.mode));
+document.getElementById("blurToggle").onchange=render;
+
+/* ---------- 主渲染 ---------- */
+function render(){
+  buildWeekBar(); updateReviewBadge();
+  if(mode==="list"){ renderList(weekItems(curWeek), curWeek, "W"+curWeek+" 單字"); }
+  else if(mode==="review"){
+    const items=allUnknownItems();
+    renderList(items, null, "⭐ 我不會的單字");
+    const host=document.getElementById("listView");
+    if(items.length){
+      const bar=document.createElement("div");
+      bar.className="stat";
+      bar.innerHTML=`共 ${items.length} 個不會的單字
+        <button class="clearbtn" onclick="if(confirm('確定清除全部標記？')){unknown.clear();saveUnknown();render();}">清除全部</button>`;
+      host.prepend(bar);
+    }
+  }
+  else if(mode==="card"){ renderCard(); }
+}
+render();
+</script>
+</body>
+</html>
