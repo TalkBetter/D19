@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lesson 120 中英對照</title>
+  <style>
+    :root{
+      --bg:#eef4f8; --bg-accent:#dde8ef; --card:#ffffff; --text:#1f2937; --muted:#5f6b7a;
+      --blue:#1d4ed8; --line:#d9e2ec; --tag:#e8f0ff; --tagText:#1e3a8a;
+      --header:#0f172a; --soft:#f8fbff; --soft-blue:#edf4ff;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:
+        radial-gradient(circle at top, rgba(255,255,255,.85), transparent 34%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-accent) 100%);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","Microsoft JhengHei",Arial,sans-serif;
+      line-height:1.72
+    }
+    header{
+      position:sticky;top:0;z-index:10;
+      background:rgba(255,255,255,.94);
+      backdrop-filter:blur(12px);
+      border-bottom:1px solid rgba(217,226,236,.95);
+      padding:18px 20px
+    }
+    header h1{margin:0;font-size:30px;letter-spacing:.4px;color:var(--header)}
+    header p{margin:6px 0 0;color:var(--muted);font-size:18px}
+    main{max-width:1120px;margin:0 auto;padding:26px 18px 64px}
+    .tools{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 18px}
+    .btn{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:999px;
+      padding:10px 16px;
+      font-size:18px;
+      font-weight:600;
+      cursor:pointer;
+      color:var(--text);
+      box-shadow:0 4px 12px rgba(15,23,42,.04)
+    }
+    .btn:hover{border-color:#93c5fd;background:#eff6ff}
+    .note{
+      margin:0 0 24px;
+      padding:16px 18px;
+      border-left:5px solid #93c5fd;
+      border-radius:14px;
+      background:rgba(255,255,255,.8);
+      color:#334155;
+      font-size:18px;
+      box-shadow:0 8px 22px rgba(15,23,42,.04)
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:22px;
+      padding:22px 22px 18px;
+      margin:18px 0;
+      box-shadow:0 12px 30px rgba(15,23,42,.05)
+    }
+    .num{
+      display:inline-flex;align-items:center;justify-content:center;
+      width:40px;height:40px;border-radius:999px;
+      background:linear-gradient(135deg, var(--tag) 0%, #dbeafe 100%);
+      color:var(--tagText);font-weight:800;margin-right:10px;
+      box-shadow:inset 0 0 0 1px rgba(59,130,246,.08)
+    }
+    .q{
+      display:flex;align-items:flex-start;gap:2px;
+      font-size:28px;font-weight:800;margin:0 0 12px;color:#0f172a;line-height:1.45
+    }
+    .zh{
+      color:#475569;
+      margin:0;
+      padding:12px 14px;
+      font-size:21px;
+      background:var(--soft);
+      border-radius:14px;
+      border:1px solid #e7eef7
+    }
+    .answers{
+      border-top:1px dashed #cbd5e1;
+      padding-top:14px;
+      margin-top:16px;
+      display:grid;
+      gap:12px
+    }
+    .answer{
+      padding:14px 16px;
+      border:1px solid #e8eef5;
+      border-radius:16px;
+      background:linear-gradient(180deg, #ffffff 0%, var(--soft-blue) 100%)
+    }
+    .answer:last-child{border-bottom:0}
+    .en{color:var(--blue);font-size:22px;font-weight:700;margin:0;line-height:1.6}
+    .cn{color:#475569;font-size:20px;margin:8px 0 0;line-height:1.65}
+    .hide-zh .zh,.hide-zh .cn{display:none}
+    .hide-en .q,.hide-en .en{display:none}
+    @media (max-width: 640px){
+      header{padding:16px}
+      header h1{font-size:26px}
+      main{padding:18px 12px 40px}
+      .card{padding:18px 16px}
+      .q{font-size:24px}
+      .zh,.cn,.en{font-size:19px}
+      .num{width:36px;height:36px}
+    }
+    @media print{
+      header,.tools{display:none}
+      .card{box-shadow:none;break-inside:avoid}
+      .note{box-shadow:none;background:#fff}
+      body{background:#fff}
+      main{max-width:none}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Lesson 120 中英對照</h1>
+  <p>英文問答＋中文翻譯｜手機閱讀版</p>
+</header>
+<main id="app">
+  <div class="tools">
+    <button class="btn" onclick="document.body.classList.toggle('hide-zh')">切換中文</button>
+    <button class="btn" onclick="document.body.classList.toggle('hide-en')">切換英文</button>
+    <button class="btn" onclick="window.print()">列印 / 存成 PDF</button>
+  </div>
+  <p class="note">藍色為英文答案，下方為中文翻譯。空格 _____ 可代入人名。</p>
+
+<article class="card">
+  <h2 class="q"><span class="num">1</span>How often do we have homework?</h2>
+  <p class="zh">我們多久有一次功課？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">We have homework two or three times a month.</p>
+      <p class="cn">我們一個月有兩、三次功課。</p>
+    </div>
+    <div class="answer">
+      <p class="en">We have recording homework every class.</p>
+      <p class="cn">我們每堂課都有錄音功課。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">2</span>What are you afraid of?</h2>
+  <p class="zh">你害怕什麼？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">I’m afraid of ghosts.</p>
+      <p class="cn">我害怕鬼。</p>
+    </div>
+    <div class="answer">
+      <p class="en">I’m afraid of heights.</p>
+      <p class="cn">我怕高。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">3</span>Does your social studies teacher ever tell you stories about history?</h2>
+  <p class="zh">你的社會課老師有時候會告訴你有關歷史的故事嗎？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">Yes, he does. He often tells us stories about history. They’re interesting.</p>
+      <p class="cn">是的，他會。他常常告訴我們歷史故事。那些故事很有趣。</p>
+    </div>
+    <div class="answer">
+      <p class="en">No, she doesn’t. She seldom tells us stories about history.</p>
+      <p class="cn">不，她不會。她很少告訴我們歷史故事。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">4</span>Do your parents ever take you to a restaurant?</h2>
+  <p class="zh">你的父母有時候會帶你去餐廳嗎？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">Yes, they do. They often take me to a restaurant.</p>
+      <p class="cn">是的，他們會。他們常常帶我去餐廳。</p>
+    </div>
+    <div class="answer">
+      <p class="en">No, they don’t. They never take me to one.</p>
+      <p class="cn">不，他們不會。他們從來不帶我去餐廳。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">5</span>Are there any smart students in our class?</h2>
+  <p class="zh">我們班裡有聰明的學生嗎？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">Yes, there are. There are a lot of smart students in our class.</p>
+      <p class="cn">是的，有。我們班裡有很多聰明的學生。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">6</span>Is there an airport in Taipei?</h2>
+  <p class="zh">台北有一個飛機場嗎？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">Yes, there is. There’s one in Taipei.</p>
+      <p class="cn">是的，有。台北有一個。</p>
+    </div>
+    <div class="answer">
+      <p class="en">Yes, there is. There’s an airport in Taipei.</p>
+      <p class="cn">是的，有。台北有一個機場。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">7</span>What does the boy like to talk about?</h2>
+  <p class="zh">這個男孩喜歡談論什麼？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">He likes to talk about video games.</p>
+      <p class="cn">他喜歡談論電玩遊戲。</p>
+    </div>
+    <div class="answer">
+      <p class="en">He likes to talk about pretty girls.</p>
+      <p class="cn">他喜歡談論漂亮的女生。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">8</span>How do you get to school?</h2>
+  <p class="zh">你如何到學校？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">I walk to school.</p>
+      <p class="cn">我走路去學校。</p>
+    </div>
+    <div class="answer">
+      <p class="en">My mother takes me to school on her scooter.</p>
+      <p class="cn">我媽媽騎機車載我去學校。</p>
+    </div>
+    <div class="answer">
+      <p class="en">My father drives me to school.</p>
+      <p class="cn">我爸爸開車載我去學校。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">9</span>Does your father take the MRT to work?</h2>
+  <p class="zh">你爸爸搭捷運上班嗎？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">Yes, he does. He takes the MRT to work.</p>
+      <p class="cn">是的，他會。他搭捷運去上班。</p>
+    </div>
+    <div class="answer">
+      <p class="en">No, he doesn’t. He doesn’t take it to work.</p>
+      <p class="cn">不，他不會。他不搭捷運去上班。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">10</span>How does he get to work?</h2>
+  <p class="zh">他如何去上班？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">He drives to work.</p>
+      <p class="cn">他開車去上班。</p>
+    </div>
+    <div class="answer">
+      <p class="en">He gets to work by scooter.</p>
+      <p class="cn">他騎機車去上班。</p>
+    </div>
+    <div class="answer">
+      <p class="en">He takes the MRT to work.</p>
+      <p class="cn">他搭捷運去上班。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">11</span>Who brings you to English class?</h2>
+  <p class="zh">誰帶你來上英文課？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">My mother brings me to English class.</p>
+      <p class="cn">我媽媽帶我來上英文課。</p>
+    </div>
+    <div class="answer">
+      <p class="en">My father brings me here.</p>
+      <p class="cn">我爸爸帶我來這裡。</p>
+    </div>
+    <div class="answer">
+      <p class="en">Nobody brings me here. I come by myself.</p>
+      <p class="cn">沒有人帶我來這裡。我自己來。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">12</span>Are you scared of ghosts?</h2>
+  <p class="zh">你害怕鬼嗎？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">Yes, I am. I’m scared of them.</p>
+      <p class="cn">是的，我怕。我害怕它們。</p>
+    </div>
+    <div class="answer">
+      <p class="en">No, I’m not. I’m not scared of ghosts. I don’t believe in them.</p>
+      <p class="cn">不，我不怕。我不害怕鬼。我不相信有鬼。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">13</span>How many people are there in your family?</h2>
+  <p class="zh">你的家庭裡有幾個人？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">There are four people in my family.</p>
+      <p class="cn">我家有四個人。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">14</span>What do you usually take to school?</h2>
+  <p class="zh">你通常帶什麼去學校？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">I usually take my backpack, pencil case, and other things to school.</p>
+      <p class="cn">我通常帶書包、鉛筆盒和其他東西去學校。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">15</span>Do tests make you nervous?</h2>
+  <p class="zh">考試會讓你緊張嗎？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">Yes, they do. They make me very nervous.</p>
+      <p class="cn">是的，會。考試讓我很緊張。</p>
+    </div>
+    <div class="answer">
+      <p class="en">No, they don’t. They don’t make me nervous.</p>
+      <p class="cn">不，不會。考試不會讓我緊張。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">16</span>Does our teacher ever tell you to pay attention?</h2>
+  <p class="zh">我們的老師有時候會告訴你要專心嗎？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">Yes, he does. He often tells me to pay attention.</p>
+      <p class="cn">是的，他會。他常常告訴我要專心。</p>
+    </div>
+    <div class="answer">
+      <p class="en">No, he doesn’t. He never tells me to pay attention.</p>
+      <p class="cn">不，他不會。他從來沒有叫我要專心。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">17</span>Are there any elephants in Taipei Zoo?</h2>
+  <p class="zh">台北動物園裡有大象嗎？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">Yes, there are. There are a few elephants in Taipei Zoo.</p>
+      <p class="cn">是的，有。台北動物園裡有幾隻大象。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">18</span>Are you hungry?</h2>
+  <p class="zh">你餓了嗎？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">Yes, I am. I’m hungry.</p>
+      <p class="cn">是的，我餓了。</p>
+    </div>
+    <div class="answer">
+      <p class="en">No, I’m not. I’m not hungry.</p>
+      <p class="cn">不，我不餓。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">19</span>How does my hair look?</h2>
+  <p class="zh">我的頭髮看起來如何？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">It looks beautiful.</p>
+      <p class="cn">它看起來很漂亮。</p>
+    </div>
+    <div class="answer">
+      <p class="en">It looks nice.</p>
+      <p class="cn">它看起來很好看。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">20</span>Does _____ ever take your eraser without asking?</h2>
+  <p class="zh">_____ 有時候會沒有經過你的同意就拿你的橡皮擦嗎？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">Yes, he does. He often takes it without asking.</p>
+      <p class="cn">是的，他會。他常常沒有問就拿走它。</p>
+    </div>
+    <div class="answer">
+      <p class="en">No, she doesn’t. She rarely takes my eraser without asking.</p>
+      <p class="cn">不，她不會。她很少沒有問就拿我的橡皮擦。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">21</span>Is your mother scared of bugs?</h2>
+  <p class="zh">你媽媽害怕蟲嗎？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">Yes, she is. She’s scared of bugs.</p>
+      <p class="cn">是的，她怕。她害怕蟲。</p>
+    </div>
+    <div class="answer">
+      <p class="en">No, she isn’t. She isn’t scared of them.</p>
+      <p class="cn">不，她不怕。她不害怕牠們。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">22</span>Does _____ ever talk to animals?</h2>
+  <p class="zh">_____ 有時候會和動物說話嗎？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">Yes, he does. He sometimes talks to animals.</p>
+      <p class="cn">是的，他會。他有時候會和動物說話。</p>
+    </div>
+    <div class="answer">
+      <p class="en">No, she doesn’t. She never talks to them.</p>
+      <p class="cn">不，她不會。她從來不和牠們說話。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">23</span>Is there an air conditioner in your bedroom?</h2>
+  <p class="zh">你的臥室裡有一台冷氣機嗎？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">Yes, there is. There’s an air conditioner in my bedroom.</p>
+      <p class="cn">是的，有。我的臥室裡有一台冷氣機。</p>
+    </div>
+    <div class="answer">
+      <p class="en">No, there isn’t. There isn’t one in my bedroom.</p>
+      <p class="cn">不，沒有。我的臥室裡沒有冷氣機。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">24</span>Are there any sharks in the river?</h2>
+  <p class="zh">河裡有鯊魚嗎？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">No, there aren’t. There aren’t any sharks in the river.</p>
+      <p class="cn">不，沒有。河裡沒有鯊魚。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">25</span>Does _____ ever tell a lie?</h2>
+  <p class="zh">_____ 有時候會說謊嗎？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">Yes, he does. He sometimes tells a lie when he is too nervous.</p>
+      <p class="cn">是的，他會。他太緊張的時候有時候會說謊。</p>
+    </div>
+    <div class="answer">
+      <p class="en">No, she doesn’t. She never tells a lie.</p>
+      <p class="cn">不，她不會。她從來不說謊。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">26</span>What does your teacher do when you make a mistake?</h2>
+  <p class="zh">當你犯錯時，你的老師會做什麼？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">He corrects me and makes me record when I make a mistake in class.</p>
+      <p class="cn">當我在課堂上犯錯時，他會糾正我，並讓我錄音。</p>
+    </div>
+    <div class="answer">
+      <p class="en">He makes me keep standing when I make a mistake in class.</p>
+      <p class="cn">當我在課堂上犯錯時，他會讓我一直站著。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">27</span>How often does your father make dinner?</h2>
+  <p class="zh">你爸爸多久做一次晚餐？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">He makes dinner once a week.</p>
+      <p class="cn">他一週做一次晚餐。</p>
+    </div>
+    <div class="answer">
+      <p class="en">He never makes dinner.</p>
+      <p class="cn">他從來不做晚餐。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">28</span>Does everybody have to answer these questions?</h2>
+  <p class="zh">每個人都必須回答這些問題嗎？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">Yes, we do. Everybody has to answer these questions.</p>
+      <p class="cn">是的，我們必須。每個人都必須回答這些問題。</p>
+    </div>
+    <div class="answer">
+      <p class="en">Yes, we do. Everyone has to answer these questions.</p>
+      <p class="cn">是的，我們必須。每個人都必須回答這些問題。</p>
+    </div>
+  </div>
+</article>
+<article class="card">
+  <h2 class="q"><span class="num">29</span>Is this homework as difficult as the last homework?</h2>
+  <p class="zh">這次的功課和上次的功課一樣困難嗎？</p>
+  <div class="answers">
+    <div class="answer">
+      <p class="en">Yes, it is. It’s as difficult as the last homework.</p>
+      <p class="cn">是的，一樣難。這次功課和上次功課一樣困難。</p>
+    </div>
+    <div class="answer">
+      <p class="en">No, it isn’t. It isn’t as difficult as the last homework.</p>
+      <p class="cn">不，沒有。這次功課沒有上次功課那麼困難。</p>
+    </div>
+  </div>
+</article>
+</main>
+</body>
+</html>
