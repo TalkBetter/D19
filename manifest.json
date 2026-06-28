@@ -1,0 +1,21 @@
+{
+  "name": "筆順讀音",
+  "short_name": "筆順讀音",
+  "description": "輸入國字查看筆順動畫並聆聽讀音",
+  "lang": "zh-Hant",
+  "dir": "ltr",
+  "start_url": "./w.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef2f8",
+  "theme_color": "#1857b8",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
