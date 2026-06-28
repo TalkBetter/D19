@@ -1,7 +1,7 @@
 "use strict";
 
 // 版本號：改動 app shell 後遞增即可更新快取
-var CACHE = "bishun-v2";
+var CACHE = "bishun-v3";
 
 // 離線可用的 app 殼層（同網域檔案）
 var SHELL = ["./w.html", "./manifest.json", "./icon.svg"];

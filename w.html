@@ -14,10 +14,12 @@
 <link rel="apple-touch-icon" href="./icon.svg">
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{height:100%;}
+  html{height:100%;}
   body{margin:0;font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,sans-serif;
-       background:#eef2f8;color:#1f2933;display:flex;flex-direction:column;min-height:100%;
-       -webkit-user-select:none;user-select:none;overscroll-behavior:none;}
+       background:#eef2f8;color:#1f2933;display:flex;flex-direction:column;
+       min-height:100%;min-height:100svh;min-height:100dvh;
+       -webkit-user-select:none;user-select:none;overscroll-behavior:none;
+       -webkit-text-size-adjust:100%;}
 
   /* App bar */
   .appbar{position:sticky;top:0;z-index:10;
@@ -49,8 +51,8 @@
         padding:18px;text-align:center;display:none;flex-direction:column;align-items:center;justify-content:center;}
   .card.show{display:flex;}
   .card.show ~ .hint{display:none;}
-  .gif-wrap{margin:4px auto;flex:1;min-height:300px;width:100%;display:flex;align-items:center;justify-content:center;}
-  .gif-wrap img{width:100%;max-width:560px;height:auto;border-radius:14px;background:#fff;image-rendering:auto;}
+  .gif-wrap{margin:4px auto;flex:1 1 auto;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;}
+  .gif-wrap img{max-width:100%;max-height:100%;width:auto;height:auto;border-radius:14px;background:#fff;image-rendering:auto;}
   .placeholder{color:#9aa4b3;font-size:16px;}
   .audio-row{margin-top:14px;}
   .audio-row button{font-size:18px;padding:14px 34px;border:none;border-radius:30px;background:#26a96a;color:#fff;
@@ -61,6 +63,24 @@
 
   .hint{margin-top:48px;text-align:center;color:#9aa4b3;font-size:16px;line-height:2;}
   .hint .big{font-size:46px;display:block;margin-bottom:8px;}
+
+  /* 手機螢幕調整 */
+  @media (max-width:480px){
+    .appbar{padding:calc(env(safe-area-inset-top) + 12px) 16px 12px;}
+    .appbar h1{font-size:18px;letter-spacing:1px;}
+    .appbar .sub{font-size:11px;}
+    main{padding:14px 12px calc(env(safe-area-inset-bottom) + 14px);}
+    .search input{font-size:23px;padding:14px 14px;}
+    .mic{width:56px;font-size:22px;}
+    .card{margin-top:14px;padding:14px;border-radius:18px;}
+    .audio-row button{font-size:17px;padding:13px 30px;}
+    .hint{margin-top:30px;font-size:15px;}
+    .hint .big{font-size:40px;}
+  }
+  @media (max-height:560px){
+    .hint{margin-top:16px;}
+    .card{margin-top:12px;}
+  }
 </style>
 </head>
 <body>
@@ -97,7 +117,30 @@ var inEl = document.getElementById("charInput");
 var card = document.getElementById("card");
 var gifWrap = document.getElementById("gifWrap");
 var playBtn = document.getElementById("playBtn");
-var audio = null;
+
+// 單一可重用的音訊元素（iOS 對重複 new Audio() 支援不佳）
+var audio = document.createElement("audio");
+audio.preload = "auto";
+audio.setAttribute("playsinline", "");
+audio.setAttribute("webkit-playsinline", "");
+var audioSrc = null;
+
+// iOS Safari 規定：音訊必須先在「使用者手勢」中解鎖，之後才能用程式播放
+var audioUnlocked = false;
+var SILENT_WAV = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
+function unlockAudio(){
+  if(audioUnlocked){ return; }
+  audioUnlocked = true;
+  try{
+    audio.src = SILENT_WAV;
+    var p = audio.play();
+    if(p && p.then){ p.catch(function(){}); }
+  }catch(e){}
+}
+["touchend", "pointerdown", "mousedown", "keydown"].forEach(function(ev){
+  document.addEventListener(ev, unlockAudio, true);
+});
+
 var lastCh = null;
 var reqId = 0;
 
@@ -126,12 +169,15 @@ function lookup(ch){
   img.src = gifUrl;
   gifWrap.appendChild(img);
 
-  if(audio){ audio.pause(); audio = null; }
+  audio.pause();
   if(code){
-    audio = new Audio("https://stroke-order.learningweb.moe.edu.tw/sound/" + code + ".mp3");
+    audioSrc = "https://stroke-order.learningweb.moe.edu.tw/sound/" + code + ".mp3";
+    audio.src = audioSrc;
     playBtn.disabled = false;
-    audio.play().catch(function(){});
+    var pp = audio.play();
+    if(pp && pp.then){ pp.catch(function(){}); }
   } else {
+    audioSrc = null;
     playBtn.disabled = true;
   }
   card.classList.add("show");
@@ -176,7 +222,11 @@ if(SR){
   micBtn.title = "此瀏覽器不支援語音輸入";
 }
 playBtn.addEventListener("click", function(){
-  if(audio){ audio.currentTime = 0; audio.play().catch(function(){}); }
+  if(audioSrc){
+    audio.currentTime = 0;
+    var pp = audio.play();
+    if(pp && pp.then){ pp.catch(function(){}); }
+  }
 });
 inEl.focus();
 
