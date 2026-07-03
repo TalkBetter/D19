@@ -132,7 +132,8 @@ function unlockAudio(){
   if(audioUnlocked){ return; }
   audioUnlocked = true;
   try{
-    audio.src = SILENT_WAV;
+    // 已載入讀音時不可把 src 蓋掉，否則播放鈕會播到無聲檔
+    if(!audioSrc){ audio.src = SILENT_WAV; }
     var p = audio.play();
     if(p && p.then){ p.catch(function(){}); }
   }catch(e){}
@@ -222,10 +223,19 @@ if(SR){
   micBtn.title = "此瀏覽器不支援語音輸入";
 }
 playBtn.addEventListener("click", function(){
-  if(audioSrc){
-    audio.currentTime = 0;
-    var pp = audio.play();
-    if(pp && pp.then){ pp.catch(function(){}); }
+  if(!audioSrc){ return; }
+  // src 可能被解鎖用的無聲檔蓋掉或載入失敗，點擊時一律確認再播
+  if(audio.src !== audioSrc){ audio.src = audioSrc; }
+  try{ audio.currentTime = 0; }catch(e){}
+  var pp = audio.play();
+  if(pp && pp.then){
+    pp.catch(function(){
+      // 失敗時趁還在使用者手勢內重新載入再播一次
+      audio.src = audioSrc;
+      audio.load();
+      var pp2 = audio.play();
+      if(pp2 && pp2.then){ pp2.catch(function(){}); }
+    });
   }
 });
 inEl.focus();
