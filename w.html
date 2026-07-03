@@ -60,6 +60,7 @@
   .audio-row button:hover{background:#1f8b58;}
   .audio-row button:active{transform:scale(.96);}
   .audio-row button:disabled{background:#b7c2cf;cursor:not-allowed;box-shadow:none;}
+  .audio-msg{margin-top:8px;min-height:1.2em;font-size:13px;color:#d1495b;}
 
   .hint{margin-top:48px;text-align:center;color:#9aa4b3;font-size:16px;line-height:2;}
   .hint .big{font-size:46px;display:block;margin-bottom:8px;}
@@ -87,7 +88,7 @@
   <header class="appbar">
     <span class="logo">&#9999;&#65039;</span>
     <h1>筆順讀音</h1>
-    <span class="sub">輸入國字查詢</span>
+    <span class="sub">輸入國字查詢 · v5</span>
   </header>
 
   <main>
@@ -100,6 +101,7 @@
       <div class="gif-wrap" id="gifWrap"></div>
       <div class="audio-row">
         <button id="playBtn" type="button">&#128266; 播放讀音</button>
+        <div class="audio-msg" id="audioMsg"></div>
       </div>
     </div>
 
@@ -117,6 +119,7 @@ var inEl = document.getElementById("charInput");
 var card = document.getElementById("card");
 var gifWrap = document.getElementById("gifWrap");
 var playBtn = document.getElementById("playBtn");
+var audioMsg = document.getElementById("audioMsg");
 
 // 單一可重用的音訊元素（iOS 對重複 new Audio() 支援不佳）
 var audio = document.createElement("audio");
@@ -171,6 +174,7 @@ function lookup(ch){
   gifWrap.appendChild(img);
 
   audio.pause();
+  audioMsg.textContent = "";
   if(code){
     audioSrc = "https://stroke-order.learningweb.moe.edu.tw/sound/" + code + ".mp3";
     audio.src = audioSrc;
@@ -222,8 +226,21 @@ if(SR){
   micBtn.disabled = true;
   micBtn.title = "此瀏覽器不支援語音輸入";
 }
+// 保底方案：mp3 播不出來時改用系統語音合成唸出這個字
+function speakFallback(){
+  try{
+    if(!window.speechSynthesis || !lastCh){ return; }
+    var u = new SpeechSynthesisUtterance(lastCh);
+    u.lang = "zh-TW";
+    u.rate = 0.8;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+
 playBtn.addEventListener("click", function(){
   if(!audioSrc){ return; }
+  audioMsg.textContent = "";
   // src 可能被解鎖用的無聲檔蓋掉或載入失敗，點擊時一律確認再播
   if(audio.src !== audioSrc){ audio.src = audioSrc; }
   try{ audio.currentTime = 0; }catch(e){}
@@ -234,7 +251,12 @@ playBtn.addEventListener("click", function(){
       audio.src = audioSrc;
       audio.load();
       var pp2 = audio.play();
-      if(pp2 && pp2.then){ pp2.catch(function(){}); }
+      if(pp2 && pp2.then){
+        pp2.catch(function(err){
+          audioMsg.textContent = "音檔播放失敗（" + (err && err.name ? err.name : "未知") + "），改用語音合成";
+          speakFallback();
+        });
+      }
     });
   }
 });
@@ -242,7 +264,16 @@ inEl.focus();
 
 if("serviceWorker" in navigator){
   window.addEventListener("load", function(){
-    navigator.serviceWorker.register("./sw.js").catch(function(){});
+    navigator.serviceWorker.register("./sw.js").then(function(reg){
+      if(reg && reg.update){ reg.update(); }
+    }).catch(function(){});
+  });
+  // 新版 service worker 接手時重新載入一次，立即換到新版頁面
+  var swReloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", function(){
+    if(swReloaded){ return; }
+    swReloaded = true;
+    location.reload();
   });
 }
 </script>
