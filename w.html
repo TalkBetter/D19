@@ -201,6 +201,7 @@ inEl.addEventListener("keydown", function(e){ if(e.key === "Enter"){ doSearch();
 inEl.addEventListener("input", function(){ if(!composing){ doSearch(); } });
 
 var micBtn = document.getElementById("micBtn");
+var stopMic = function(){};   // 播放前用來停掉錄音；不支援語音時維持空函式
 var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 if(SR){
   var rec = null;
@@ -283,6 +284,15 @@ if(SR){
     }
     startRec();
   });
+
+  // 錄音佔用音訊焦點會讓播放被靜音或失敗，播放前先徹底停掉辨識
+  stopMic = function(){
+    if(!listening){ return; }
+    heard = "";
+    clearApplyTimers();
+    dropRec();
+    setListening(false);
+  };
 } else {
   micBtn.disabled = true;
   micBtn.title = "此瀏覽器不支援語音輸入";
@@ -299,30 +309,57 @@ function speakFallback(){
   }catch(e){}
 }
 
+function reportPlayFail(err){
+  audioMsg.textContent = "音檔播放失敗（" + (err && err.name ? err.name : "未知") + "），改用語音合成";
+  speakFallback();
+}
+
 playBtn.addEventListener("click", function(){
   if(!audioSrc){ return; }
   audioMsg.textContent = "";
+  stopMic();
   // src 可能被解鎖用的無聲檔蓋掉或載入失敗，點擊時一律確認再播
   if(audio.src !== audioSrc){ audio.src = audioSrc; }
   try{ audio.currentTime = 0; }catch(e){}
   var pp = audio.play();
-  if(pp && pp.then){
-    pp.catch(function(err){
-      // AbortError＝播放被 pause() 中斷（例如按了麥克風），不是失敗，不要重試
-      if(err && err.name === "AbortError"){ return; }
-      // 失敗時趁還在使用者手勢內重新載入再播一次
-      audio.src = audioSrc;
-      audio.load();
-      var pp2 = audio.play();
-      if(pp2 && pp2.then){
-        pp2.catch(function(err2){
-          if(err2 && err2.name === "AbortError"){ return; }
-          audioMsg.textContent = "音檔播放失敗（" + (err2 && err2.name ? err2.name : "未知") + "），改用語音合成";
-          speakFallback();
-        });
+  if(!pp || !pp.then){ return; }
+  pp.catch(function(err){
+    // AbortError＝播放被 pause() 中斷（例如按了麥克風），不是失敗，不要重試
+    if(err && err.name === "AbortError"){ return; }
+    // 失敗時趁還在使用者手勢內重新載入再播一次
+    audio.src = audioSrc;
+    audio.load();
+    var pp2 = audio.play();
+    if(!pp2 || !pp2.then){ return; }
+    pp2.catch(function(err2){
+      if(err2 && err2.name === "AbortError"){ return; }
+      // 可能只是網路慢還沒載入完成：等到可播放時再試最後一次（最多 6 秒）
+      var settled = false;
+      function settle(){
+        if(settled){ return false; }
+        settled = true;
+        clearTimeout(tid);
+        audio.removeEventListener("canplay", onReady);
+        audio.removeEventListener("error", onFail);
+        return true;
       }
+      function onReady(){
+        if(!settle()){ return; }
+        var pp3 = audio.play();
+        if(pp3 && pp3.then){
+          pp3.catch(function(err3){
+            if(err3 && err3.name === "AbortError"){ return; }
+            reportPlayFail(err3);
+          });
+        }
+      }
+      function onFail(){ if(settle()){ reportPlayFail(err2); } }
+      var tid = setTimeout(function(){ if(settle()){ reportPlayFail(err2); } }, 6000);
+      audio.addEventListener("canplay", onReady);
+      audio.addEventListener("error", onFail);
+      audio.load();
     });
-  }
+  });
 });
 inEl.focus();
 
