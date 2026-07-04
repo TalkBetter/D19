@@ -221,6 +221,10 @@ if(SR){
     }
   }
 
+  var applyTimers = [];
+  function scheduleApply(ms){ applyTimers.push(setTimeout(applyHeard, ms)); }
+  function clearApplyTimers(){ while(applyTimers.length){ clearTimeout(applyTimers.pop()); } }
+
   function dropRec(){
     if(!rec){ return; }
     rec.onstart = rec.onend = rec.onerror = rec.onresult = null;
@@ -236,6 +240,7 @@ if(SR){
   function startRec(){
     // 手機上重複使用同一個實例容易卡住，每次都建新的
     dropRec();
+    clearApplyTimers();   // 上一輪排定的延遲播放不可在這輪錄音中觸發
     rec = new SR();
     rec.lang = "zh-TW";
     rec.interimResults = true;   // 手機端只等 final 常收不到結果
@@ -245,7 +250,7 @@ if(SR){
     rec.onend = function(){
       setListening(false);
       // 錄音中播放會被系統靜音，等麥克風釋放音訊焦點後再播
-      setTimeout(applyHeard, 250);
+      scheduleApply(250);
     };
     rec.onerror = function(){ setListening(false); };
     rec.onresult = function(e){
@@ -256,7 +261,7 @@ if(SR){
       heard = t;
       if(e.results[e.results.length - 1].isFinal){
         // 保底：少數裝置拿到 final 後不觸發 onend（applyHeard 重複呼叫無害）
-        setTimeout(applyHeard, 800);
+        scheduleApply(800);
       }
     };
     try{
@@ -302,14 +307,17 @@ playBtn.addEventListener("click", function(){
   try{ audio.currentTime = 0; }catch(e){}
   var pp = audio.play();
   if(pp && pp.then){
-    pp.catch(function(){
+    pp.catch(function(err){
+      // AbortError＝播放被 pause() 中斷（例如按了麥克風），不是失敗，不要重試
+      if(err && err.name === "AbortError"){ return; }
       // 失敗時趁還在使用者手勢內重新載入再播一次
       audio.src = audioSrc;
       audio.load();
       var pp2 = audio.play();
       if(pp2 && pp2.then){
-        pp2.catch(function(err){
-          audioMsg.textContent = "音檔播放失敗（" + (err && err.name ? err.name : "未知") + "），改用語音合成";
+        pp2.catch(function(err2){
+          if(err2 && err2.name === "AbortError"){ return; }
+          audioMsg.textContent = "音檔播放失敗（" + (err2 && err2.name ? err2.name : "未知") + "），改用語音合成";
           speakFallback();
         });
       }
