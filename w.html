@@ -201,7 +201,7 @@ inEl.addEventListener("keydown", function(e){ if(e.key === "Enter"){ doSearch();
 inEl.addEventListener("input", function(){ if(!composing){ doSearch(); } });
 
 var micBtn = document.getElementById("micBtn");
-var stopMic = function(){};   // 播放前用來停掉錄音；不支援語音時維持空函式
+var stopMic = function(){ return false; };   // 播放前用來停掉錄音；不支援語音時維持空函式
 var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 if(SR){
   var rec = null;
@@ -250,8 +250,9 @@ if(SR){
     rec.onstart = function(){ setListening(true); };
     rec.onend = function(){
       setListening(false);
-      // 錄音中播放會被系統靜音，等麥克風釋放音訊焦點後再播
-      scheduleApply(250);
+      // 錄音會把媒體音量壓低（ducking），太快播放整段都會小聲，
+      // 等系統恢復音量後再播
+      scheduleApply(600);
     };
     rec.onerror = function(){ setListening(false); };
     rec.onresult = function(e){
@@ -262,7 +263,7 @@ if(SR){
       heard = t;
       if(e.results[e.results.length - 1].isFinal){
         // 保底：少數裝置拿到 final 後不觸發 onend（applyHeard 重複呼叫無害）
-        scheduleApply(800);
+        scheduleApply(1200);
       }
     };
     try{
@@ -286,12 +287,14 @@ if(SR){
   });
 
   // 錄音佔用音訊焦點會讓播放被靜音或失敗，播放前先徹底停掉辨識
+  // 回傳 true 表示剛剛真的停掉了錄音（呼叫端應等音量恢復再播）
   stopMic = function(){
-    if(!listening){ return; }
+    if(!listening){ return false; }
     heard = "";
     clearApplyTimers();
     dropRec();
     setListening(false);
+    return true;
   };
 } else {
   micBtn.disabled = true;
@@ -317,7 +320,16 @@ function reportPlayFail(err){
 playBtn.addEventListener("click", function(){
   if(!audioSrc){ return; }
   audioMsg.textContent = "";
-  stopMic();
+  if(stopMic()){
+    // 剛停掉錄音：等系統把被壓低的媒體音量恢復再播，否則整段會小聲
+    setTimeout(playNow, 500);
+  } else {
+    playNow();
+  }
+});
+
+function playNow(){
+  if(!audioSrc){ return; }
   // src 可能被解鎖用的無聲檔蓋掉或載入失敗，點擊時一律確認再播
   if(audio.src !== audioSrc){ audio.src = audioSrc; }
   try{ audio.currentTime = 0; }catch(e){}
@@ -360,7 +372,7 @@ playBtn.addEventListener("click", function(){
       audio.load();
     });
   });
-});
+}
 inEl.focus();
 
 if("serviceWorker" in navigator){
