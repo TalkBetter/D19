@@ -242,7 +242,11 @@ if(SR){
     rec.maxAlternatives = 1;
     heard = "";
     rec.onstart = function(){ setListening(true); };
-    rec.onend = function(){ setListening(false); applyHeard(); };
+    rec.onend = function(){
+      setListening(false);
+      // 錄音中播放會被系統靜音，等麥克風釋放音訊焦點後再播
+      setTimeout(applyHeard, 250);
+    };
     rec.onerror = function(){ setListening(false); };
     rec.onresult = function(e){
       var t = "";
@@ -250,7 +254,10 @@ if(SR){
         t += e.results[i][0].transcript || "";
       }
       heard = t;
-      if(e.results[e.results.length - 1].isFinal){ applyHeard(); }
+      if(e.results[e.results.length - 1].isFinal){
+        // 保底：少數裝置拿到 final 後不觸發 onend（applyHeard 重複呼叫無害）
+        setTimeout(applyHeard, 800);
+      }
     };
     try{
       rec.start();
