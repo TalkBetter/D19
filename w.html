@@ -203,25 +203,74 @@ inEl.addEventListener("input", function(){ if(!composing){ doSearch(); } });
 var micBtn = document.getElementById("micBtn");
 var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 if(SR){
-  var rec = new SR();
-  rec.lang = "zh-TW";
-  rec.interimResults = false;
-  rec.maxAlternatives = 1;
+  var rec = null;
   var listening = false;
-  micBtn.addEventListener("click", function(){
-    if(listening){ rec.stop(); return; }
-    try{ rec.start(); }catch(e){}
-  });
-  rec.onstart = function(){ listening = true; micBtn.classList.add("listening"); };
-  rec.onend = function(){ listening = false; micBtn.classList.remove("listening"); };
-  rec.onerror = function(){ listening = false; micBtn.classList.remove("listening"); };
-  rec.onresult = function(e){
-    var said = (e.results[0][0].transcript || "").replace(/[\s，。、！？．,.!?]/g, "");
+  var heard = "";
+
+  function setListening(on){
+    listening = on;
+    micBtn.classList.toggle("listening", on);
+  }
+
+  function applyHeard(){
+    var said = (heard || "").replace(/[\s，。、！？．,.!?]/g, "");
+    heard = "";
     if(said){
       inEl.value = said;
       lookup(Array.from(said)[0]);
     }
-  };
+  }
+
+  function dropRec(){
+    if(!rec){ return; }
+    rec.onstart = rec.onend = rec.onerror = rec.onresult = null;
+    try{ rec.abort(); }catch(e){}
+    rec = null;
+  }
+
+  function stopPlayback(){
+    try{ audio.pause(); }catch(e){}
+    if(window.speechSynthesis){ try{ speechSynthesis.cancel(); }catch(e){} }
+  }
+
+  function startRec(){
+    // 手機上重複使用同一個實例容易卡住，每次都建新的
+    dropRec();
+    rec = new SR();
+    rec.lang = "zh-TW";
+    rec.interimResults = true;   // 手機端只等 final 常收不到結果
+    rec.maxAlternatives = 1;
+    heard = "";
+    rec.onstart = function(){ setListening(true); };
+    rec.onend = function(){ setListening(false); applyHeard(); };
+    rec.onerror = function(){ setListening(false); };
+    rec.onresult = function(e){
+      var t = "";
+      for(var i = 0; i < e.results.length; i++){
+        t += e.results[i][0].transcript || "";
+      }
+      heard = t;
+      if(e.results[e.results.length - 1].isFinal){ applyHeard(); }
+    };
+    try{
+      rec.start();
+      setListening(true);   // 有些手機 onstart 很慢，先給視覺回饋
+    }catch(e){
+      dropRec();
+      setListening(false);
+    }
+  }
+
+  micBtn.addEventListener("click", function(){
+    // 不論開始或停止，按下麥克風就先停掉播放中的聲音
+    stopPlayback();
+    if(listening){
+      setListening(false);
+      if(rec){ try{ rec.stop(); }catch(e){} }
+      return;
+    }
+    startRec();
+  });
 } else {
   micBtn.disabled = true;
   micBtn.title = "此瀏覽器不支援語音輸入";
