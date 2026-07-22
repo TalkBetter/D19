@@ -403,6 +403,23 @@
   QUESTIONS.push(...SPECIAL_TAIWAN_WORLD_QUESTIONS);
   QUESTIONS.push(...LIFE_TERM_QUESTIONS);
 
+  // 相同注音提示可能對應多個詞；合併後在答案區完整顯示其他可能。
+  const QUESTIONS_BY_CLUE = new Map();
+  for (const question of QUESTIONS) {
+    const existing = QUESTIONS_BY_CLUE.get(question.clue);
+    if (existing) {
+      for (const answer of question.answers) {
+        if (!existing.answers.includes(answer)) existing.answers.push(answer);
+      }
+    } else {
+      QUESTIONS_BY_CLUE.set(question.clue, {
+        clue: question.clue,
+        answers: question.answers.slice()
+      });
+    }
+  }
+  QUESTIONS.splice(0, QUESTIONS.length, ...QUESTIONS_BY_CLUE.values());
+
   function shuffle(arr) {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
