@@ -338,17 +338,6 @@
     { clue: 'ㄏㄕ', answers: ['回收'] }, { clue: 'ㄞㄒㄧ', answers: ['愛心'] }
   ];
 
-  // 全齡台灣生活題庫：以名詞主題與名詞組合，動態產生 1,000 題。
-  const LIFE_CONTEXTS = [
-    ['公司', 'ㄍㄙ'], ['學校', 'ㄒㄒ'], ['社區', 'ㄕㄑ'], ['家長', 'ㄐㄓ'],
-    ['學生', 'ㄒㄕ'], ['教師', 'ㄐㄕ'], ['員工', 'ㄩㄍ'], ['客戶', 'ㄎㄏ'],
-    ['會員', 'ㄏㄩ'], ['住戶', 'ㄓㄏ'], ['交通', 'ㄐㄊ'], ['通勤', 'ㄊㄑ'],
-    ['購物', 'ㄍㄨ'], ['餐飲', 'ㄘㄧ'], ['醫療', 'ㄧㄌ'], ['金融', 'ㄐㄖ'],
-    ['行政', 'ㄒㄓ'], ['資訊', 'ㄗㄒ'], ['校園', 'ㄒㄩ'], ['職場', 'ㄓㄔ'],
-    ['家庭', 'ㄐㄊ'], ['生活', 'ㄕㄏ'], ['服務', 'ㄈㄨ'], ['工作', 'ㄍㄗ'],
-    ['課程', 'ㄎㄔ']
-  ];
-
   const LIFE_TERMS = [
     ['公車', 'ㄍㄔ'], ['捷運', 'ㄐㄩㄣ'], ['火車', 'ㄏㄔ'], ['計程車', 'ㄐㄔㄔ'],
     ['停車位', 'ㄊㄔㄨ'], ['停車場', 'ㄊㄔㄔ'], ['加油站', 'ㄐㄧㄓ'], ['機車', 'ㄐㄔ'],
@@ -405,17 +394,9 @@
     { clue: 'ㄐㄊ', answers: ['揪團'] }, { clue: 'ㄔㄧㄅ', answers: ['衝一波'] }
   ];
 
-  const GENERATED_TAIWAN_QUESTIONS = [];
-  for (const [context, contextClue] of LIFE_CONTEXTS) {
-    for (const [term, termClue] of LIFE_TERMS) {
-      GENERATED_TAIWAN_QUESTIONS.push({
-        clue: contextClue + termClue,
-        answers: [context + term]
-      });
-    }
-  }
+  const LIFE_TERM_QUESTIONS = LIFE_TERMS.map(([answer, clue]) => ({ clue, answers: [answer] }));
   QUESTIONS.push(...SPECIAL_TAIWAN_WORLD_QUESTIONS);
-  QUESTIONS.push(...GENERATED_TAIWAN_QUESTIONS.slice(0, 1000));
+  QUESTIONS.push(...LIFE_TERM_QUESTIONS);
 
   function shuffle(arr) {
     const a = arr.slice();
