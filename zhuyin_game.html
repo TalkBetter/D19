@@ -368,6 +368,43 @@
     ['菜市場', 'ㄘㄕㄔ'], ['飲料店', 'ㄧㄌㄉ']
   ];
 
+  // 地名、世界城市與日常流行語：各自為獨立題目，不和其他詞彙組合。
+  const SPECIAL_TAIWAN_WORLD_QUESTIONS = [
+    { clue: 'ㄊㄅ', answers: ['臺北'] }, { clue: 'ㄒㄅ', answers: ['新北'] },
+    { clue: 'ㄊㄩ', answers: ['桃園'] }, { clue: 'ㄊㄓ', answers: ['臺中'] },
+    { clue: 'ㄊㄋ', answers: ['臺南'] }, { clue: 'ㄍㄒ', answers: ['高雄'] },
+    { clue: 'ㄐㄌ', answers: ['基隆'] }, { clue: 'ㄒㄓ', answers: ['新竹'] },
+    { clue: 'ㄐㄧ', answers: ['嘉義'] }, { clue: 'ㄇㄌ', answers: ['苗栗'] },
+    { clue: 'ㄓㄏ', answers: ['彰化'] }, { clue: 'ㄋㄊ', answers: ['南投'] },
+    { clue: 'ㄩㄌ', answers: ['雲林'] }, { clue: 'ㄆㄉ', answers: ['屏東'] },
+    { clue: 'ㄧㄌ', answers: ['宜蘭'] }, { clue: 'ㄏㄌ', answers: ['花蓮'] },
+    { clue: 'ㄊㄉ', answers: ['臺東'] }, { clue: 'ㄆㄏ', answers: ['澎湖'] },
+    { clue: 'ㄐㄇ', answers: ['金門'] }, { clue: 'ㄇㄗ', answers: ['馬祖'] },
+    { clue: 'ㄉㄕ', answers: ['淡水'] }, { clue: 'ㄐㄈ', answers: ['九份'] },
+    { clue: 'ㄒㄇㄊ', answers: ['西門町'] }, { clue: 'ㄒㄧㄑ', answers: ['信義區'] },
+    { clue: 'ㄉㄐ', answers: ['東京'] }, { clue: 'ㄉㄅ', answers: ['大阪'] },
+    { clue: 'ㄕㄦ', answers: ['首爾'] }, { clue: 'ㄇㄍ', answers: ['曼谷'] },
+    { clue: 'ㄒㄐㄆ', answers: ['新加坡'] }, { clue: 'ㄐㄌㄆ', answers: ['吉隆坡'] },
+    { clue: 'ㄏㄋ', answers: ['河內'] }, { clue: 'ㄏㄓㄇㄕ', answers: ['胡志明市'] },
+    { clue: 'ㄅㄌ', answers: ['巴黎'] }, { clue: 'ㄌㄉ', answers: ['倫敦'] },
+    { clue: 'ㄌㄇ', answers: ['羅馬'] }, { clue: 'ㄅㄌ', answers: ['柏林'] },
+    { clue: 'ㄇㄉㄌ', answers: ['馬德里'] }, { clue: 'ㄋㄩ', answers: ['紐約'] },
+    { clue: 'ㄌㄕㄐ', answers: ['洛杉磯'] }, { clue: 'ㄐㄐㄕ', answers: ['舊金山'] },
+    { clue: 'ㄉㄌㄉ', answers: ['多倫多'] }, { clue: 'ㄒㄌ', answers: ['雪梨'] },
+    { clue: 'ㄇㄦㄅ', answers: ['墨爾本'] }, { clue: 'ㄐㄧ', answers: ['加油'] },
+    { clue: 'ㄗ', answers: ['讚'] }, { clue: 'ㄢㄗ', answers: ['按讚'] },
+    { clue: 'ㄉㄎ', answers: ['打卡'] }, { clue: 'ㄗㄆ', answers: ['自拍'] },
+    { clue: 'ㄨㄏ', answers: ['網紅'] }, { clue: 'ㄓㄅ', answers: ['直播'] },
+    { clue: 'ㄓㄒ', answers: ['追星'] }, { clue: 'ㄈㄙ', answers: ['粉絲'] },
+    { clue: 'ㄍㄊ', answers: ['梗圖'] }, { clue: 'ㄇㄧ', answers: ['迷因'] },
+    { clue: 'ㄎㄒ', answers: ['開箱'] }, { clue: 'ㄊㄍ', answers: ['團購'] },
+    { clue: 'ㄊㄆ', answers: ['躺平'] }, { clue: 'ㄒㄍ', answers: ['斜槓'] },
+    { clue: 'ㄧㄕ', answers: ['厭世'] }, { clue: 'ㄈㄒ', answers: ['佛系'] },
+    { clue: 'ㄌㄩ', answers: ['療癒'] }, { clue: 'ㄒㄑㄒ', answers: ['小確幸'] },
+    { clue: 'ㄗㄅ', answers: ['早八'] }, { clue: 'ㄒㄅ', answers: ['下班'] },
+    { clue: 'ㄐㄊ', answers: ['揪團'] }, { clue: 'ㄔㄧㄅ', answers: ['衝一波'] }
+  ];
+
   const GENERATED_TAIWAN_QUESTIONS = [];
   for (const [context, contextClue] of LIFE_CONTEXTS) {
     for (const [term, termClue] of LIFE_TERMS) {
@@ -377,6 +414,7 @@
       });
     }
   }
+  QUESTIONS.push(...SPECIAL_TAIWAN_WORLD_QUESTIONS);
   QUESTIONS.push(...GENERATED_TAIWAN_QUESTIONS.slice(0, 1000));
 
   function shuffle(arr) {
