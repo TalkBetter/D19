@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>STAR BLAST 星爆射擊</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: #05060f;
+    overflow: hidden;
+    font-family: "Segoe UI", Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+  }
+  #game {
+    width: 100vw; height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+  }
+  canvas { display: block; box-shadow: 0 0 60px rgba(80,120,255,0.25); }
+</style>
+</head>
+<body>
+<div id="game"></div>
+<script src="phaser.min.js"></script>
+<script>
+const W = 480, H = 720;
+
+/* ---------- 啟動場景：產生所有貼圖 ---------- */
+class BootScene extends Phaser.Scene {
+  constructor() { super('Boot'); }
+  create() {
+    const g = this.make.graphics({ x: 0, y: 0, add: false });
+
+    // 玩家機體（三角發光船）
+    g.clear();
+    g.fillStyle(0x66e0ff, 1);
+    g.fillTriangle(20, 0, 0, 44, 40, 44);
+    g.fillStyle(0xffffff, 1);
+    g.fillTriangle(20, 8, 12, 40, 28, 40);
+    g.fillStyle(0x2266ff, 1);
+    g.fillRect(6, 30, 6, 16);
+    g.fillRect(28, 30, 6, 16);
+    g.generateTexture('player', 40, 48);
+
+    // 一般敵人
+    g.clear();
+    g.fillStyle(0xff4d6d, 1);
+    g.fillTriangle(0, 0, 36, 0, 18, 34);
+    g.fillStyle(0xffd1dc, 1);
+    g.fillCircle(18, 12, 6);
+    g.generateTexture('enemy', 36, 36);
+
+    // 衝刺敵人
+    g.clear();
+    g.fillStyle(0xffc04d, 1);
+    g.fillTriangle(16, 0, 0, 32, 32, 32);
+    g.fillStyle(0xfff4d1, 1);
+    g.fillRect(12, 12, 8, 14);
+    g.generateTexture('enemy2', 32, 32);
+
+    // Boss
+    g.clear();
+    g.fillStyle(0xa64dff, 1);
+    g.fillRoundedRect(0, 0, 140, 70, 18);
+    g.fillStyle(0xe0b3ff, 1);
+    g.fillRoundedRect(20, 14, 100, 26, 12);
+    g.fillStyle(0xff4dff, 1);
+    g.fillCircle(40, 50, 10);
+    g.fillCircle(100, 50, 10);
+    g.generateTexture('boss', 140, 70);
+
+    // 玩家子彈
+    g.clear();
+    g.fillStyle(0xffffff, 1);
+    g.fillRoundedRect(0, 0, 6, 20, 3);
+    g.fillStyle(0x66ffff, 1);
+    g.fillRoundedRect(1, 2, 4, 16, 2);
+    g.generateTexture('bullet', 6, 20);
+
+    // 敵方子彈（圓形彈幕）
+    g.clear();
+    g.fillStyle(0xff66aa, 1);
+    g.fillCircle(7, 7, 7);
+    g.fillStyle(0xffffff, 1);
+    g.fillCircle(7, 7, 3);
+    g.generateTexture('ebullet', 14, 14);
+
+    // 粒子（柔光點）
+    g.clear();
+    g.fillStyle(0xffffff, 1);
+    g.fillCircle(8, 8, 8);
+    g.generateTexture('spark', 16, 16);
+
+    // 星星
+    g.clear();
+    g.fillStyle(0xffffff, 1);
+    g.fillCircle(2, 2, 2);
+    g.generateTexture('star', 4, 4);
+
+    // 道具
+    g.clear();
+    g.fillStyle(0x33ff99, 1);
+    g.fillRoundedRect(0, 0, 22, 22, 5);
+    g.fillStyle(0x05210f, 1);
+    g.fillRect(9, 4, 4, 14);
+    g.fillRect(4, 9, 14, 4);
+    g.generateTexture('power', 22, 22);
+
+    this.scene.start('Game');
+  }
+}
+
+/* ---------- 主遊戲 ---------- */
+class GameScene extends Phaser.Scene {
+  constructor() { super('Game'); }
+
+  create() {
+    this.score = 0;
+    this.lives = 3;
+    this.level = 1;
+    this.fireLevel = 1;
+    this.gameOver = false;
+    this.bossActive = false;
+    this.killCount = 0;
+
+    // ----- 背景星空（三層視差）-----
+    this.starLayers = [];
+    for (let layer = 0; layer < 3; layer++) {
+      const speed = 40 + layer * 80;
+      const size = 0.4 + layer * 0.5;
+      const grp = this.add.group();
+      const count = 30 + layer * 15;
+      for (let i = 0; i < count; i++) {
+        const s = this.add.image(Phaser.Math.Between(0, W), Phaser.Math.Between(0, H), 'star')
+          .setScale(size)
+          .setAlpha(0.3 + layer * 0.25);
+        s.spd = speed;
+        grp.add(s);
+      }
+      this.starLayers.push(grp);
+    }
+
+    // ----- 群組 -----
+    this.bullets = this.physics.add.group();
+    this.enemies = this.physics.add.group();
+    this.ebullets = this.physics.add.group();
+    this.powerups = this.physics.add.group();
+
+    // ----- 玩家 -----
+    this.player = this.physics.add.image(W / 2, H - 100, 'player');
+    this.player.setCollideWorldBounds(true);
+    this.player.body.setSize(20, 20).setOffset(10, 14);
+    this.player.invuln = 0;
+
+    // 玩家尾焰粒子
+    this.thruster = this.add.particles(0, 0, 'spark', {
+      speedY: { min: 60, max: 140 },
+      scale: { start: 0.5, end: 0 },
+      alpha: { start: 0.8, end: 0 },
+      tint: [0x66e0ff, 0x2266ff, 0xffffff],
+      lifespan: 350,
+      frequency: 20,
+      blendMode: 'ADD',
+      follow: this.player,
+      followOffset: { x: 0, y: 22 }
+    });
+
+    // 爆炸粒子發射器（共用）
+    this.explosionMgr = this.add.particles(0, 0, 'spark', {
+      speed: { min: 80, max: 320 },
+      scale: { start: 0.9, end: 0 },
+      alpha: { start: 1, end: 0 },
+      lifespan: { min: 300, max: 700 },
+      blendMode: 'ADD',
+      emitting: false
+    });
+
+    // 擊中火花
+    this.hitMgr = this.add.particles(0, 0, 'spark', {
+      speed: { min: 40, max: 160 },
+      scale: { start: 0.4, end: 0 },
+      tint: 0xffff66,
+      lifespan: 200,
+      blendMode: 'ADD',
+      emitting: false
+    });
+
+    // ----- 控制 -----
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.input.on('pointermove', (p) => {
+      if (this.gameOver) return;
+      if (p.isDown || this.sys.game.device.input.touch) {
+        this.targetX = p.x; this.targetY = p.y;
+      }
+    });
+    this.input.on('pointerdown', (p) => {
+      if (this.gameOver) { this.scene.restart(); return; }
+      this.targetX = p.x; this.targetY = p.y; this.dragging = true;
+    });
+    this.input.on('pointerup', () => { this.dragging = false; });
+
+    // ----- 碰撞 -----
+    this.physics.add.overlap(this.bullets, this.enemies, this.hitEnemy, null, this);
+    this.physics.add.overlap(this.player, this.ebullets, this.playerHit, null, this);
+    this.physics.add.overlap(this.player, this.enemies, this.playerHit, null, this);
+    this.physics.add.overlap(this.player, this.powerups, this.getPower, null, this);
+
+    // ----- HUD -----
+    const fs = { fontFamily: 'Arial', fontSize: '20px', color: '#ffffff', stroke: '#001', strokeThickness: 3 };
+    this.scoreText = this.add.text(12, 10, 'SCORE 0', fs).setDepth(100);
+    this.livesText = this.add.text(W - 12, 10, '♥♥♥', { ...fs, fontSize: '22px', color: '#ff6b8a' }).setOrigin(1, 0).setDepth(100);
+    this.lvText = this.add.text(W / 2, 10, 'LV 1', fs).setOrigin(0.5, 0).setDepth(100);
+
+    // 開場標題
+    this.showBanner('STAR BLAST', '拖曳移動・自動射擊', 0x66e0ff);
+
+    // ----- 計時器 -----
+    this.fireTimer = 0;
+    this.spawnTimer = this.time.addEvent({ delay: 900, callback: this.spawnWave, callbackScope: this, loop: true });
+  }
+
+  showBanner(title, sub, color) {
+    const t = this.add.text(W / 2, H / 2 - 30, title, {
+      fontFamily: 'Arial Black, Arial', fontSize: '46px', color: '#fff',
+      stroke: '#1133ff', strokeThickness: 6
+    }).setOrigin(0.5).setDepth(120).setTint(color);
+    const s = this.add.text(W / 2, H / 2 + 24, sub, {
+      fontFamily: 'Arial', fontSize: '18px', color: '#aef'
+    }).setOrigin(0.5).setDepth(120);
+    t.setScale(0.6); t.setAlpha(0);
+    this.tweens.add({ targets: t, scale: 1, alpha: 1, duration: 400, ease: 'Back.out' });
+    this.tweens.add({ targets: [t, s], alpha: 0, delay: 1600, duration: 600,
+      onComplete: () => { t.destroy(); s.destroy(); } });
+    this.tweens.add({ targets: s, alpha: { from: 0, to: 1 }, duration: 400 });
+  }
+
+  update(time, delta) {
+    const dt = delta / 1000;
+
+    // 星空捲動
+    this.starLayers.forEach(grp => grp.children.iterate(s => {
+      s.y += s.spd * dt;
+      if (s.y > H) { s.y = -4; s.x = Phaser.Math.Between(0, W); }
+    }));
+
+    if (this.gameOver) return;
+
+    // ----- 玩家移動 -----
+    const spd = 360;
+    let vx = 0, vy = 0;
+    if (this.cursors.left.isDown) vx = -spd;
+    else if (this.cursors.right.isDown) vx = spd;
+    if (this.cursors.up.isDown) vy = -spd;
+    else if (this.cursors.down.isDown) vy = spd;
+    this.player.setVelocity(vx, vy);
+
+    // 觸控/滑鼠跟隨
+    if ((this.dragging || this.sys.game.device.input.touch) && this.targetX !== undefined && vx === 0 && vy === 0) {
+      const dx = this.targetX - this.player.x;
+      const dy = (this.targetY - 60) - this.player.y; // 手指上方一點，看得到船
+      this.player.setVelocity(Phaser.Math.Clamp(dx * 12, -600, 600), Phaser.Math.Clamp(dy * 12, -600, 600));
+    }
+
+    // 機體微傾
+    this.player.setRotation(Phaser.Math.Clamp(this.player.body.velocity.x / 1600, -0.35, 0.35));
+
+    // 無敵閃爍
+    if (this.player.invuln > 0) {
+      this.player.invuln -= delta;
+      this.player.setAlpha(Math.floor(time / 80) % 2 ? 0.3 : 1);
+      if (this.player.invuln <= 0) this.player.setAlpha(1);
+    }
+
+    // ----- 自動射擊 -----
+    this.fireTimer -= delta;
+    if (this.fireTimer <= 0) {
+      this.fire();
+      this.fireTimer = Math.max(90, 200 - this.fireLevel * 18);
+    }
+
+    // 清理出界物件
+    this.bullets.children.iterate(b => { if (b && b.y < -30) this.killObj(b); });
+    this.ebullets.children.iterate(b => {
+      if (b && (b.y > H + 30 || b.y < -30 || b.x < -30 || b.x > W + 30)) this.killObj(b);
+    });
+    this.powerups.children.iterate(p => { if (p && p.y > H + 30) this.killObj(p); });
+  }
+
+  killObj(o) { if (o) { o.disableBody(true, true); o.destroy(); } }
+
+  fire() {
+    const lv = this.fireLevel;
+    const shoot = (offX, angleDeg) => {
+      const b = this.bullets.create(this.player.x + offX, this.player.y - 20, 'bullet');
+      b.setBlendMode(Phaser.BlendModes.ADD).setScale(1.2);
+      const rad = Phaser.Math.DegToRad(angleDeg - 90);
+      this.physics.velocityFromRotation(rad, 760, b.body.velocity);
+    };
+    if (lv === 1) { shoot(0, 0); }
+    else if (lv === 2) { shoot(-8, 0); shoot(8, 0); }
+    else if (lv === 3) { shoot(0, 0); shoot(-10, -10); shoot(10, 10); }
+    else { shoot(-10, 0); shoot(10, 0); shoot(-14, -16); shoot(14, 16); }
+  }
+
+  spawnWave() {
+    if (this.gameOver || this.bossActive) return;
+
+    // 每累積一定擊殺進關 / 召喚 Boss
+    if (this.killCount > 0 && this.killCount % 28 === 0 && !this.bossActive) {
+      this.spawnBoss();
+      return;
+    }
+
+    const pattern = Phaser.Math.Between(0, 2);
+    const n = 4 + Math.min(this.level, 5);
+    if (pattern === 0) {
+      // 一字排開
+      for (let i = 0; i < n; i++) {
+        const x = (W / (n + 1)) * (i + 1);
+        this.spawnEnemy(x, -30, 'enemy', 80 + this.level * 8, 'wave');
+      }
+    } else if (pattern === 1) {
+      // V 字俯衝
+      for (let i = 0; i < n; i++) {
+        this.time.delayedCall(i * 180, () => {
+          this.spawnEnemy(Phaser.Math.Between(40, W - 40), -30, 'enemy2', 160 + this.level * 10, 'dive');
+        });
+      }
+    } else {
+      // 旋轉射手
+      for (let i = 0; i < Math.min(n, 4); i++) {
+        const x = (W / 5) * (i + 1);
+        this.spawnEnemy(x, -30, 'enemy', 60, 'shooter');
+      }
+    }
+  }
+
+  spawnEnemy(x, y, key, speed, type) {
+    const e = this.enemies.create(x, y, key);
+    e.hp = type === 'dive' ? 1 : 2;
+    e.type = type;
+    e.scoreVal = type === 'dive' ? 80 : 50;
+    e.shootTimer = Phaser.Math.Between(600, 1400);
+    e.t = 0;
+    e.baseX = x;
+    if (type === 'wave') e.setVelocityY(speed);
+    else if (type === 'dive') e.setVelocity(Phaser.Math.Between(-60, 60), speed);
+    else if (type === 'shooter') e.setVelocityY(speed);
+    e.setBlendMode(Phaser.BlendModes.NORMAL);
+  }
+
+  spawnBoss() {
+    this.bossActive = true;
+    this.spawnTimer.paused = true;
+    this.showBanner('WARNING', '頭目來襲！', 0xff4dff);
+    this.time.delayedCall(1200, () => {
+      const boss = this.enemies.create(W / 2, -60, 'boss');
+      boss.type = 'boss';
+      boss.hp = 60 + this.level * 25;
+      boss.maxHp = boss.hp;
+      boss.scoreVal = 1000;
+      boss.shootTimer = 0;
+      boss.phase = 0;
+      boss.t = 0;
+      boss.setVelocityY(60);
+      boss.body.setSize(130, 60);
+      this.boss = boss;
+      // Boss 血條
+      this.bossBarBg = this.add.rectangle(W / 2, 40, W - 60, 10, 0x331133).setDepth(90);
+      this.bossBar = this.add.rectangle(W / 2 - (W - 60) / 2, 40, W - 60, 10, 0xff4dff).setOrigin(0, 0.5).setDepth(91);
+      this.tweens.add({ targets: boss, y: 110, duration: 1500, ease: 'Sine.out',
+        onComplete: () => { boss.setVelocity(80, 0); } });
+    });
+  }
+
+  // 敵人 AI（在 overlap 前用 update group 處理較重，這裡用事件式：在 update 走訪）
+  enemyBehavior(time, delta) {}
+
+  hitEnemy(bullet, enemy) {
+    this.killObj(bullet);
+    this.hitMgr.emitParticleAt(enemy.x, enemy.y, 6);
+    enemy.hp -= 1;
+    enemy.setTintFill(0xffffff);
+    this.time.delayedCall(40, () => { if (enemy.active) enemy.clearTint(); });
+
+    if (enemy.type === 'boss' && this.bossBar) {
+      this.bossBar.width = (W - 60) * Phaser.Math.Clamp(enemy.hp / enemy.maxHp, 0, 1);
+    }
+
+    if (enemy.hp <= 0) {
+      this.score += enemy.scoreVal;
+      this.killCount += enemy.type === 'boss' ? 0 : 1;
+      this.scoreText.setText('SCORE ' + this.score);
+      this.explode(enemy.x, enemy.y, enemy.type === 'boss' ? 1 : 0.6,
+        enemy.type === 'boss' ? 0xff4dff : 0xff6b8a);
+
+      // 掉落道具
+      if (enemy.type === 'boss' || Phaser.Math.Between(0, 100) < 12) {
+        const p = this.powerups.create(enemy.x, enemy.y, 'power');
+        p.setVelocityY(110); p.setBlendMode(Phaser.BlendModes.ADD);
+        this.tweens.add({ targets: p, angle: 360, duration: 1500, repeat: -1 });
+      }
+
+      if (enemy.type === 'boss') {
+        this.bossDefeated();
+      }
+      this.killObj(enemy);
+    }
+  }
+
+  bossDefeated() {
+    this.bossActive = false;
+    this.level += 1;
+    this.lvText.setText('LV ' + this.level);
+    if (this.bossBar) { this.bossBar.destroy(); this.bossBarBg.destroy(); }
+    this.boss = null;
+    // 大爆炸連發
+    const cx = W / 2, cy = 110;
+    for (let i = 0; i < 10; i++) {
+      this.time.delayedCall(i * 80, () => {
+        this.explode(cx + Phaser.Math.Between(-60, 60), cy + Phaser.Math.Between(-30, 30), 1.2, 0xffaa33);
+      });
+    }
+    this.cameras.main.shake(500, 0.02);
+    this.showBanner('LEVEL ' + this.level, '加速！', 0x33ff99);
+    this.time.delayedCall(1800, () => { if (!this.gameOver) this.spawnTimer.paused = false; });
+  }
+
+  enemyShoot(enemy) {
+    if (enemy.type === 'boss') {
+      // 扇形彈幕
+      const n = 14;
+      const base = Phaser.Math.Angle.Between(enemy.x, enemy.y, this.player.x, this.player.y);
+      for (let i = 0; i < n; i++) {
+        const a = base - 0.7 + (1.4 / (n - 1)) * i;
+        this.makeEBullet(enemy.x, enemy.y + 30, a, 220);
+      }
+    } else if (enemy.type === 'shooter') {
+      const a = Phaser.Math.Angle.Between(enemy.x, enemy.y, this.player.x, this.player.y);
+      this.makeEBullet(enemy.x, enemy.y, a, 200);
+    }
+  }
+
+  makeEBullet(x, y, angle, speed) {
+    const b = this.ebullets.create(x, y, 'ebullet');
+    b.setBlendMode(Phaser.BlendModes.ADD).setScale(1.1);
+    b.body.setCircle(7);
+    this.physics.velocityFromRotation(angle, speed, b.body.velocity);
+  }
+
+  explode(x, y, scale, color) {
+    this.explosionMgr.setParticleTint(color);
+    this.explosionMgr.setParticleScale(scale, 0);
+    this.explosionMgr.emitParticleAt(x, y, Math.floor(20 * scale + 12));
+    const flash = this.add.image(x, y, 'spark').setScale(scale * 3).setTint(color)
+      .setBlendMode(Phaser.BlendModes.ADD).setDepth(50);
+    this.tweens.add({ targets: flash, scale: scale * 6, alpha: 0, duration: 300,
+      onComplete: () => flash.destroy() });
+    this.cameras.main.shake(120, 0.006 * scale);
+  }
+
+  getPower(player, p) {
+    this.killObj(p);
+    if (this.fireLevel < 4) {
+      this.fireLevel += 1;
+      this.showFloating(player.x, player.y - 30, 'POWER UP!', 0x33ff99);
+    } else {
+      this.score += 200;
+      this.scoreText.setText('SCORE ' + this.score);
+      this.showFloating(player.x, player.y - 30, '+200', 0xffff66);
+    }
+    this.hitMgr.emitParticleAt(player.x, player.y, 12);
+  }
+
+  showFloating(x, y, txt, color) {
+    const t = this.add.text(x, y, txt, { fontFamily: 'Arial Black', fontSize: '20px', color: '#fff' })
+      .setOrigin(0.5).setTint(color).setDepth(110);
+    this.tweens.add({ targets: t, y: y - 40, alpha: 0, duration: 800,
+      onComplete: () => t.destroy() });
+  }
+
+  playerHit(player, hazard) {
+    if (player.invuln > 0 || this.gameOver) return;
+    if (hazard.texture.key === 'ebullet') this.killObj(hazard);
+    else { // 撞到敵機，敵機也爆
+      this.explode(hazard.x, hazard.y, 0.6, 0xff6b8a);
+      if (hazard.type !== 'boss') this.killObj(hazard);
+    }
+
+    this.lives -= 1;
+    this.livesText.setText('♥'.repeat(Math.max(0, this.lives)) || ' ');
+    this.explode(player.x, player.y, 0.9, 0x66e0ff);
+    this.fireLevel = Math.max(1, this.fireLevel - 1);
+
+    if (this.lives <= 0) {
+      this.endGame();
+    } else {
+      player.invuln = 2000;
+      player.setPosition(W / 2, H - 100).setVelocity(0, 0);
+    }
+  }
+
+  endGame() {
+    this.gameOver = true;
+    this.player.setVisible(false);
+    this.thruster.stop();
+    this.spawnTimer.paused = true;
+    this.explode(this.player.x, this.player.y, 1.4, 0x66e0ff);
+    this.cameras.main.shake(400, 0.02);
+
+    const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x000010, 0.6).setDepth(200);
+    const over = this.add.text(W / 2, H / 2 - 60, 'GAME OVER', {
+      fontFamily: 'Arial Black', fontSize: '52px', color: '#ff4d6d', stroke: '#300', strokeThickness: 6
+    }).setOrigin(0.5).setDepth(201);
+    this.add.text(W / 2, H / 2 + 10, 'SCORE  ' + this.score, {
+      fontFamily: 'Arial', fontSize: '26px', color: '#fff'
+    }).setOrigin(0.5).setDepth(201);
+    this.add.text(W / 2, H / 2 + 70, '點擊 / 按鍵重新開始', {
+      fontFamily: 'Arial', fontSize: '18px', color: '#9af'
+    }).setOrigin(0.5).setDepth(201);
+    this.tweens.add({ targets: over, scale: { from: 0.5, to: 1 }, duration: 500, ease: 'Back.out' });
+    this.input.keyboard.once('keydown', () => this.scene.restart());
+  }
+}
+
+/* ---------- 敵人行為：用場景的全域 update 走訪較易，這裡掛在 GameScene.update 之外 ---------- */
+// 將敵人 AI 補進 GameScene 的 update（透過覆寫）
+const _origUpdate = GameScene.prototype.update;
+GameScene.prototype.update = function (time, delta) {
+  _origUpdate.call(this, time, delta);
+  if (this.gameOver) return;
+  this.enemies.children.iterate(e => {
+    if (!e || !e.active) return;
+    e.t += delta;
+    // 移動花樣
+    if (e.type === 'wave') {
+      e.x = e.baseX + Math.sin(e.t / 350) * 60;
+    } else if (e.type === 'boss') {
+      // 左右巡弋
+      if (e.x < 80) e.setVelocityX(80);
+      else if (e.x > W - 80) e.setVelocityX(-80);
+    }
+    // 射擊
+    if (e.type === 'shooter' || e.type === 'boss') {
+      e.shootTimer -= delta;
+      if (e.shootTimer <= 0) {
+        this.enemyShoot(e);
+        e.shootTimer = e.type === 'boss' ? 900 : Phaser.Math.Between(900, 1600);
+      }
+    }
+    // 出界回收（非 boss）
+    if (e.type !== 'boss' && e.y > H + 40) this.killObj(e);
+  });
+};
+
+const config = {
+  type: Phaser.AUTO,
+  width: W, height: H,
+  parent: 'game',
+  backgroundColor: '#05060f',
+  physics: { default: 'arcade', arcade: { debug: false } },
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  scene: [BootScene, GameScene]
+};
+
+new Phaser.Game(config);
+</script>
+</body>
+</html>
