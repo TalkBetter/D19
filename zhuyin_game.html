@@ -520,7 +520,7 @@
   let deck = shuffle(QUESTIONS.map((q, i) => i));
   let pos = 0;
   let revealed = false;
-  let answeredCount = 0;
+  let answeredCount = 0, score = 0, timeLeft = 0, timerId = null, correctAnswers = [];
   const seen = new Set();
 
   const stageWrap = document.getElementById('stageWrap');
@@ -528,6 +528,15 @@
   const qTotalEl = document.getElementById('qTotal');
   const answeredEl = document.getElementById('answeredCount');
   const btnMain = document.getElementById('btnMain');
+  const main=document.querySelector('main');
+  const gameStyle=document.createElement('style');gameStyle.textContent='.hidden{display:none!important}.game-panel{width:min(92vw,560px);margin:auto;padding:12vh 1rem;text-align:center;color:#eef2ea}.game-panel input{width:80px;padding:.5rem;border:2px solid #f4d35e;border-radius:10px;text-align:center;font:800 1.35rem sans-serif}.game-panel button{min-height:72px;margin:1rem .3rem;padding:.8rem 2rem;border:2px solid #f4d35e;border-radius:14px;background:#f4d35e;color:#142019;font:900 1.4rem sans-serif;cursor:pointer}.meta-row{align-items:center;font-size:1rem}.status-group{display:flex;gap:.65rem;align-items:stretch}.status-box{display:flex;flex-direction:column;justify-content:center;min-width:120px;padding:.55rem .85rem;border:2px solid #78bce8;border-radius:13px;background:#123d59;color:#d9efff;font-size:.85rem;font-weight:800;text-align:center}.status-box b{margin-top:.08rem;color:#fff!important;font-size:1.55rem!important;line-height:1.05}.status-box.score-box{border-color:#f4d35e;background:#5a4813;color:#fff0a8}.decision{display:grid;grid-template-columns:1fr 1fr;gap:1rem;width:100%;margin-top:1rem}.decision button{width:100%;min-height:82px;margin:0;border:0;border-radius:16px;background:#24a866;color:#fff;font:900 1.55rem sans-serif;box-shadow:0 6px 0 #137444;cursor:pointer}.decision .giveup{background:#d94b4b;color:#fff;border:0;box-shadow:0 6px 0 #963232}.btn-main{min-height:78px;font-size:1.45rem}.correct-list{max-height:240px;overflow:auto;padding:1rem;background:#ffffff12;border-radius:10px;font-size:1.2rem;line-height:1.8}.correct-list span{display:inline-block;margin:0 .3rem}@media(max-width:600px){.meta-row{align-items:flex-start}.status-group{gap:.35rem}.status-box{min-width:92px;padding:.45rem;font-size:.72rem}.status-box b{font-size:1.3rem!important}.decision{gap:.65rem}.decision button{min-height:76px;font-size:1.4rem}}';document.head.append(gameStyle);
+  const resultStyle=document.createElement('style');resultStyle.textContent='#startGame{display:block;width:min(100%,360px);min-height:105px;margin:1.4rem auto 0;border-radius:18px;font-size:2rem;box-shadow:0 7px 0 #b89a28}.game-result{padding:5vh 1rem!important}.game-result h2{margin:0 0 1.2rem;color:#f4d35e;font-size:2.5rem}.result-summary{max-width:360px;margin:1rem auto 1.4rem}.result-card{padding:1.2rem .6rem;border:3px solid #f4d35e;border-radius:18px;background:#5a4813;color:#fff0a8;font-size:1.15rem;font-weight:900}.result-card b{display:block;margin-top:.2rem;color:#fff;font-size:3.5rem;line-height:1.1}.answer-title{margin:.8rem 0;font-size:1.25rem;font-weight:900}.correct-list{border:1px solid #8fb3a3}.result-btn{width:min(100%,320px)}@media(max-width:520px){#startGame{min-height:96px;font-size:1.8rem}.result-card b{font-size:3rem}}';document.head.append(resultStyle);
+  const setup=document.createElement('section');setup.className='game-panel';setup.innerHTML='遊戲時間 <input id="minutes" type="number" min="1" max="60" value="3"> 分鐘<br><button id="startGame" type="button">開始</button>';
+  const result=document.createElement('section');result.className='game-panel game-result hidden';result.innerHTML='<h2>時間到！</h2><div class="result-summary"><div class="result-card">最後得分<b id="finalScore">0</b></div></div><div class="answer-title">答對的詞語</div><div class="correct-list" id="correctWords"></div><button class="result-btn" id="restart" type="button">再玩一次</button>';
+  const decision=document.createElement('div');decision.className='decision hidden';decision.innerHTML='<button id="correct" type="button">答對</button><button class="giveup" id="giveup" type="button">答錯</button>';btnMain.insertAdjacentElement('afterend',decision);
+  main.parentNode.insertBefore(setup,main);main.parentNode.insertBefore(result,main.nextSibling);main.classList.add('hidden');
+  const minutesInput=document.getElementById('minutes');try{const savedMinutes=Number(localStorage.getItem('zhuyin-game-minutes'));if(savedMinutes>=1&&savedMinutes<=60)minutesInput.value=savedMinutes}catch(error){}minutesInput.addEventListener('change',()=>{const value=Math.min(60,Math.max(1,Number(minutesInput.value)||3));minutesInput.value=value;try{localStorage.setItem('zhuyin-game-minutes',value)}catch(error){}});
+  const statusHost=document.querySelector('.meta-row > span:last-child');statusHost.className='status-group';statusHost.innerHTML='<span class="status-box">剩餘時間<b id="timer">3:00</b></span><span class="status-box score-box">目前分數<b id="score">0</b></span>';
 
   qTotalEl.textContent = QUESTIONS.length;
 
@@ -569,6 +578,7 @@
 
   function showQuestion() {
     revealed = false;
+    decision.classList.add('hidden');btnMain.classList.remove('hidden');
     btnMain.textContent = '看答案';
     renderClue();
     updateMeta();
@@ -582,7 +592,7 @@
       answeredCount++;
     }
     renderAnswer();
-    btnMain.textContent = '下一題';
+    btnMain.classList.add('hidden');decision.classList.remove('hidden');
     updateMeta();
   }
 
@@ -595,23 +605,23 @@
     showQuestion();
   }
 
-  function handleMainAction() {
-    if (!revealed) {
-      reveal();
-    } else {
-      advance();
-    }
-  }
+  function handleMainAction() { if (!revealed) reveal(); }
+  function showTime(){document.getElementById('timer').textContent=Math.floor(timeLeft/60)+':'+String(timeLeft%60).padStart(2,'0')}
+  function finish(){clearInterval(timerId);main.classList.add('hidden');document.getElementById('finalScore').textContent=score;document.getElementById('correctWords').innerHTML=correctAnswers.length?correctAnswers.map(x=>'<span>'+x+'</span>').join(''):'沒有答對題目';result.classList.remove('hidden')}
+  function startGame(){const min=Math.min(60,Math.max(1,Number(minutesInput.value)||3));minutesInput.value=min;try{localStorage.setItem('zhuyin-game-minutes',min)}catch(error){}deck=shuffle(QUESTIONS.map((q,i)=>i));pos=0;revealed=false;answeredCount=0;score=0;correctAnswers=[];seen.clear();timeLeft=min*60;showTime();document.getElementById('score').textContent=0;setup.classList.add('hidden');result.classList.add('hidden');main.classList.remove('hidden');showQuestion();clearInterval(timerId);timerId=setInterval(()=>{timeLeft--;showTime();if(timeLeft<=0)finish()},1000)}
 
   btnMain.addEventListener('click', handleMainAction);
+  document.getElementById('correct').addEventListener('click',()=>{correctAnswers.push(currentQuestion().answers[0]);score++;document.getElementById('score').textContent=score;advance()});
+  document.getElementById('giveup').addEventListener('click',advance);
+  document.getElementById('startGame').addEventListener('click',startGame);
+  document.getElementById('restart').addEventListener('click',()=>{result.classList.add('hidden');setup.classList.remove('hidden')});
 
   document.addEventListener('keydown', (e) => {
     if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
-    if (e.code === 'Space' || e.code === 'Enter') {
+    if (!main.classList.contains('hidden') && !revealed && (e.code === 'Space' || e.code === 'Enter')) {
       e.preventDefault();
       handleMainAction();
     }
   });
 
-  showQuestion();
 </script>
